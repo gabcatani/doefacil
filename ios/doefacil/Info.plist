@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Permissões adicionadas para câmera e armazenamento -->
+	<key>NSCameraUsageDescription</key>
+	<string>$(PRODUCT_NAME) gostaria de acessar sua câmera</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>$(PRODUCT_NAME) gostaria de acessar sua biblioteca de fotos</string>
+	<!-- Permissões adicionadas para câmera e armazenamento -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

@@ -5,17 +5,17 @@ import axios from 'axios';
 const EcologyScreen = () => {
   const [newsData, setNewsData] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(`https://gnews.io/api/v4/search?q=natureza&apikey=c1ebe73ee55264415cce6a3292cd2794`);
-        setNewsData(response.data.articles);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchData();
-  }, []);
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const response = await axios.get(`https://gnews.io/api/v4/search?q=natureza&apikey=c1ebe73ee55264415cce6a3292cd2794`);
+  //       setNewsData(response.data.articles);
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+  //   fetchData();
+  // }, []);
 
   const NewsItem = ({ title, description }) => (
     <View style={styles.newsItem}>
