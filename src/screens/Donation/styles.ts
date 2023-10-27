@@ -18,9 +18,9 @@ const TextInput = styled.TextInput`
 `;
 
 const ErrorText = styled.Text`
-  color: red;
+  color: ${(props) => props.theme.text.error};
   margin-bottom: 8px;
-  font-size: "12px";
+  font-size: 12px;
 `;
 
 const ButtonSubmit = styled.Button`
@@ -60,7 +60,7 @@ const ImagePreview = styled.Image`
 `;
 
 const Title = styled.Text`
-  color: "#000";
+  color: black;
   margin-bottom: 8px;
 `;
 
