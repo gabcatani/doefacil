@@ -4,7 +4,7 @@ import {Heart, Cube, Article, MapTrifold, Gear} from 'phosphor-react-native';
 import Home from '../screens/Home';
 import Config from '../screens/Config';
 import Mural from '../screens/Mural';
-import MapScreen from '../screens/Maps';
+import ItemsList from '../screens/ItemsList';
 import Donation from '../screens/Donation';
 
 const Tab = createBottomTabNavigator();
@@ -32,7 +32,7 @@ export default function TabRoutes() {
       />
       <Tab.Screen
         name="Maps"
-        component={MapScreen}
+        component={ItemsList}
         options={{
           tabBarLabel: 'Mapa',
           tabBarIcon: ({color, size}) => (
