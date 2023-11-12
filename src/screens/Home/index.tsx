@@ -17,12 +17,12 @@ const EcologyScreen = () => {
   //   fetchData();
   // }, []);
 
-  const NewsItem = ({ title, description }) => (
-    <View style={styles.newsItem}>
-      <Text style={styles.newsTitle}>{title}</Text>
-      <Text>{description}</Text>
-    </View>
-  );
+  // const NewsItem = ({ title, description }) => (
+  //   <View style={styles.newsItem}>
+  //     <Text style={styles.newsTitle}>{title}</Text>
+  //     <Text>{description}</Text>
+  //   </View>
+  // );
 
   return (
     <View style={styles.container}>
@@ -30,12 +30,12 @@ const EcologyScreen = () => {
 
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>Últimas Notícias</Text>
-        <FlatList
+        {/* <FlatList
           showsVerticalScrollIndicator={false}
           data={newsData}
           keyExtractor={item => item.title}
           renderItem={({ item }) => <NewsItem title={item.title} description={item.description} />}
-        />
+        /> */}
       </View>
     </View>
   );
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#E7F9E9', // Verde clarinho, quase branco
+    backgroundColor: '#E7F9E9',
   },
   content: {
     flex: 1,

@@ -8,6 +8,10 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>$(PRODUCT_NAME) gostaria de acessar sua biblioteca de fotos</string>
 	<!-- Permissões adicionadas para câmera e armazenamento -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Precisamos da sua localização</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Precisamos da sua localização</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

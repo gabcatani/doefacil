@@ -10,12 +10,30 @@ import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native
 import { IDonationForms } from './types'
 import storage from '@react-native-firebase/storage';
 import axios from 'axios';
+import { MMKV } from 'react-native-mmkv';
 
 const apiKey = "AIzaSyBnb3_YFy1mvVbB6GV5YBc44_ZjXZ2fNNE";
 
 const DonationForm = () => {
   
   const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const storage = new MMKV()
+
+  const getStoredLocation = () => {
+    const storedLatitude = storage.getString('latitude');
+    const storedLongitude = storage.getString('longitude');
+    if (storedLatitude !== null && storedLatitude !== undefined && 
+        storedLongitude !== null && storedLongitude !== undefined) {
+      return {
+        lat: JSON.parse(storedLatitude),
+        lng: JSON.parse(storedLongitude),
+      };
+    }
+    return null;
+  };
+  
+  
 
   const chooseImage = () => {
     const options = {
@@ -37,23 +55,31 @@ const DonationForm = () => {
   };
 
   const getAddressCoordinates = async (address: string) => {
-    console.log('address', address)
     const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${apiKey}`);
     
-    const { lat, lng } = response.data.results[0].geometry.location;
-    return { lat, lng };
+    if (response.data.results && response.data.results.length > 0) {
+      const { lat, lng } = response.data.results[0].geometry.location;
+      return { lat, lng };
+    } else {
+      useToast({ message: "Endereço não encontrado, Tente novamente!", type: TOASTTYPE.ERROR });
+      throw new Error('Nenhum resultado de geocodificação encontrado para o endereço fornecido.');
+    }
   };
   
-
   const {
     control,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(validationSchema) });
+  } = useForm({ resolver: yupResolver(validationSchema), mode: 'onChange' });
 
   const onSubmit = async (data: any) => {
     if (!data) return useToast({message: "Tente Novamente", type:TOASTTYPE.ERROR})
+    
+    if (!imageUri) {
+      useToast({ message: "Por favor, selecione uma imagem antes de enviar.", type: TOASTTYPE.ERROR });
+      return;
+    }
 
     const {city, neighborhood, street, number } = data
     const address = `${city}-SC,${neighborhood},${street}-${number}`
@@ -64,28 +90,37 @@ const DonationForm = () => {
     await imageRef.putFile(imageUri ?? '');
     const imageUrl = await imageRef.getDownloadURL();
 
-    // try {
-    //   await firestore()
-    //     .collection('donations')
-    //     .add({
-    //       itemName: data.name,
-    //       itemCategory: data.category,
-    //       usageTime: data.usageTime,
-    //       description: data.description,
-    //       // address: {
-    //       //   lat,
-    //       //   lng
-    //       // },
-    //       image: imageUrl ?? ''
-    //     });
-    //   reset();
-    //   useToast({ message: "Doação Cadastrada", type: TOASTTYPE.SUCCESS });
-    // } catch (error) {
-    //   console.error("Erro ao adicionar doação:", error);
-    //   useToast({ message: "Tente Novamente", type: TOASTTYPE.ERROR });
-    // }
-  };
+    const storedLocation = getStoredLocation();
 
+    if (!storedLocation) {
+      useToast({ message: "Localização não disponível.", type: TOASTTYPE.ERROR });
+      return;
+    }
+  
+
+    try {
+      await firestore()
+        .collection('donations')
+        .add({
+          itemName: data.name,
+          itemCategory: data.category,
+          usageTime: data.usageTime,
+          description: data.description,
+          local: address,
+          address: {
+            lat: storedLocation.lat,
+            lng: storedLocation.lng,
+          },
+          image: imageUrl ?? ''
+        });
+      // reset();
+      // setImageUri(null)
+      useToast({ message: "Doação Cadastrada", type: TOASTTYPE.SUCCESS });
+    } catch (error) {
+      console.error("Erro ao adicionar doação:", error);
+      useToast({ message: "Tente Novamente", type: TOASTTYPE.ERROR });
+    }
+  };
 
   return (
     <S.Screen>
