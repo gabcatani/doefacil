@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
 // import {StyledText, StyledView} from './styles'
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import Geolocation from '@react-native-community/geolocation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WelcomeScreen = () => {
     const navigation = useNavigation<any>()
@@ -16,6 +18,21 @@ const WelcomeScreen = () => {
 
       return unsubscrive
     }, [])
+
+    useEffect(() => {
+      console.log('Chamando localização');
+      Geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Posição obtida:', position);
+          const { latitude, longitude } = position.coords;
+          AsyncStorage.setItem('localizacao', JSON.stringify({ latitude, longitude }));
+        },
+        (error) => {
+          console.error('Erro ao obter localização:', error);
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+      );
+    }, []);
 
     const handleNextStep = () => {
       if (user) {

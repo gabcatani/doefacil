@@ -7,12 +7,13 @@ import { useNavigation } from '@react-navigation/native';
 import { Marker, Callout} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Region = {
   latitude: number;
   longitude: number;
-  latitudeDelta: number;
-  longitudeDelta: number;
+  // latitudeDelta: number;
+  // longitudeDelta: number;
 };
 
 const ItemsList = () => {
@@ -27,34 +28,49 @@ const ItemsList = () => {
     setShowMap(prevState => !prevState);
   };
 
+
+  const calcularDistancia = (item: IDonation) => {
+
+    console.log('ITEM', item);
+    console.log('CURRENT', currentRegion);
+    
+    if (!currentRegion || !item.address) {
+      return 'distância desconhecida';
+    }
+  
+    const rad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371e3;
+    const dLat = rad(item.address.lat - currentRegion.latitude);
+    const dLong = rad(item.address.lng - currentRegion.longitude);
+  
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(rad(currentRegion.latitude)) * Math.cos(rad(item.address.lat)) *
+      Math.sin(dLong / 2) * Math.sin(dLong / 2);
+  
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; 
+  
+    return `${distance.toFixed(0)} metros`;
+  };
+
   const navigation = useNavigation();
 
   const handleItemPress = useCallback((item: IDonation) => {
     navigation.navigate('ItemDetails', { item });
   }, [navigation]);
 
-
   useEffect(() => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        console.log('position', position);
-        const { latitude, longitude } = position.coords;
-        setCurrentRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-  
-        storage.set('latitude', JSON.stringify(latitude));
-        storage.set('longitude', JSON.stringify(longitude));
-      },
-      (error) => {
-        console.error(error);
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-    );
-  }, []);
+    console.log('BUSCANDO LOCALIZACAO STORAGE')
+    AsyncStorage.getItem('localizacao', (erro, localizacaoJson) => {
+      if (localizacaoJson !== null) {
+        console.log('Setando localizacao  JSON', localizacaoJson)
+        const localizacao = JSON.parse(localizacaoJson!);
+        setCurrentRegion({latitude: localizacao.latitude, longitude: localizacao.longitude});
+      }
+    });
+
+}, []);
   
 
   useEffect(() => {
@@ -82,12 +98,12 @@ const ItemsList = () => {
         </S.ImagemContainer>
         <S.CardTextContainer>
           <S.NameText>{item.itemName}</S.NameText>
-          <S.CategoryText numberOfLines={1} ellipsizeMode="tail">{item.local}</S.CategoryText>
+          <S.CategoryText numberOfLines={1} ellipsizeMode="tail">Está a {calcularDistancia(item)} de você</S.CategoryText>
         </S.CardTextContainer>
       </S.Card>
       </TouchableOpacity>
     ),
-    []
+    [currentRegion]
   );
 
   const renderDonationMarker = (item: IDonation) => (

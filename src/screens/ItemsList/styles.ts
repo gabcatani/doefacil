@@ -20,6 +20,7 @@ const HeaderText = styled.Text`
   font-weight: bold;
 `;
 
+
 const Card = styled.View`
   flex-direction: row;
   padding: 10px;
@@ -30,7 +31,7 @@ const Card = styled.View`
 
 const CardTextContainer = styled.View`
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 10px;
   margin-left: 10px;
 `;
@@ -48,10 +49,12 @@ const ItemImage = styled.Image`
 
 const NameText = styled.Text`
   font-size: 24px;
+  textAlign: left;
 `;
 
 const CategoryText = styled.Text`
   font-size: 16px;
+  textAlign: left;
 `;
 
 const Toggle = styled.View`

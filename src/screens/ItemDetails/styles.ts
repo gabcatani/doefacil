@@ -11,6 +11,10 @@ const Header = styled.View`
   margin-bottom: 10px;
 `;
 
+const BoldText = styled.Text`
+  font-weight: bold;
+`;
+
 const HeaderText = styled.Text`
   font-size: 24px;
   font-weight: bold;
@@ -75,11 +79,22 @@ const MapContainer = styled.View`
   margin: 20px;
 `;
 
+const ButtonSolicitar = styled.Button`
+  background-color: blue;
+  padding: 15px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  width: 100%;
+  `;
+
 export { 
   Screen,
   GoBackButton,
   Header, 
   HeaderText,
+  BoldText,
+  ButtonSolicitar,
   Card, 
   CardTextContainer,
   ImagemContainer, 
