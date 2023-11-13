@@ -268,7 +268,4 @@ console.log('RESPONSE', response);
   )
 };
 
-
-
-
 export default DonationForm;

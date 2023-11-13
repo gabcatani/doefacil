@@ -1,7 +1,7 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Heart, Cube, Article, MapTrifold, Gear} from 'phosphor-react-native';
-import Home from '../screens/Home';
+import Home from '../screens/Infomations';
 import Config from '../screens/Config';
 import Mural from '../screens/Mural';
 import ItemsList from '../screens/ItemsList';
@@ -13,7 +13,7 @@ export default function TabRoutes() {
   return (
     <Tab.Navigator screenOptions={{headerShown: false}} initialRouteName="Maps" >
       <Tab.Screen
-        name="Home"
+        name="Informations"
         component={Home}
         options={{
           tabBarLabel: 'Informações',
