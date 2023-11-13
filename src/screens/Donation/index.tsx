@@ -1,162 +1,237 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import {validationSchema} from './validation'
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as S from './styles'
+import {useToast} from '../../hooks/ui/useToast'
+import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import firestore from '@react-native-firebase/firestore';
+import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native-image-picker';
+import { IDonationForms } from './types'
+import storage from '@react-native-firebase/storage';
+import axios from 'axios';
+
+const apiKey = "AIzaSyBnb3_YFy1mvVbB6GV5YBc44_ZjXZ2fNNE";
 
 const DonationForm = () => {
-  const [observations, setObservations] = useState('');
-  const [weight, setWeight] = useState('');
-  const [width, setWidth] = useState('');
-  const [height, setHeight] = useState('');
-  const [address, setAddress] = useState('');
-  const [category, setCagory] = useState('');
-  const [additionalInfo, setAdditionalInfo] = useState('');
-  const [cpf, setCPF] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [dob, setDob] = useState('');
+  
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
-  const handleFormSubmit = () => {
-    // Lógica para enviar os dados ao servidor
-    // Implemente aqui a lógica de envio dos dados do item de doação para o servidor
+  const chooseImage = () => {
+    const options = {
+      mediaType: 'photo' as MediaType,
+    };
+
+    launchImageLibrary(options, (response: ImagePickerResponse) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorMessage) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else {
+        const uri = response.assets && response.assets[0].uri;
+        if (uri) {
+          setImageUri(uri);
+        }
+      }
+    });
+  };
+
+  const getAddressCoordinates = async (address: string) => {
+    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${apiKey}`);
+    
+    if (response.data.results && response.data.results.length > 0) {
+      const { lat, lng } = response.data.results[0].geometry.location;
+      return { lat, lng };
+    } else {
+      useToast({ message: "Endereço não encontrado, Tente novamente!", type: TOASTTYPE.ERROR });
+      throw new Error('Nenhum resultado de geocodificação encontrado para o endereço fornecido.');
+    }
+  };
+  
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({ resolver: yupResolver(validationSchema), mode: 'onChange' });
+
+  const onSubmit = async (data: any) => {
+    if (!data) return useToast({message: "Tente Novamente", type:TOASTTYPE.ERROR})
+
+    const {city, neighborhood, street, number } = data
+    const address = `${city}-SC,${neighborhood},${street}-${number}`
+
+    const { lat, lng } = await getAddressCoordinates(address);
+
+    const imageRef = storage().ref(`images/${data.name}`);
+    await imageRef.putFile(imageUri ?? '');
+    const imageUrl = await imageRef.getDownloadURL();
+
+    try {
+      await firestore()
+        .collection('donations')
+        .add({
+          itemName: data.name,
+          itemCategory: data.category,
+          usageTime: data.usageTime,
+          description: data.description,
+          local: address,
+          address: {
+            lat,
+            lng
+          },
+          image: imageUrl ?? ''
+        });
+      // reset();
+      // setImageUri(null)
+      useToast({ message: "Doação Cadastrada", type: TOASTTYPE.SUCCESS });
+    } catch (error) {
+      console.error("Erro ao adicionar doação:", error);
+      useToast({ message: "Tente Novamente", type: TOASTTYPE.ERROR });
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Formulário de Doação</Text>
-      <Text style={styles.subtitle}>Preencha os detalhes do item:</Text>
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Nome"
-          value={cpf}
-          onChangeText={text => setCPF(text)}
+    <S.Screen>
+      <S.Title>
+        Dados do item
+      </S.Title>
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Nome do item'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Email"
-          value={email}
-          onChangeText={text => setEmail(text)}
+      )}
+      name="name"
+      defaultValue=""
+    />
+    {errors.name && <S.ErrorText>{errors.name.message}</S.ErrorText>}
+
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Categoria do item'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Telefone"
-          value={phoneNumber}
-          onChangeText={text => setPhoneNumber(text)}
+      )}
+      name="category"
+      defaultValue=""
+    />
+    {errors.category && <S.ErrorText>{errors.category.message}</S.ErrorText>}
+
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Tempo de Uso'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Data de Disponibilidade"
-          value={dob}
-          onChangeText={text => setDob(text)}
+      )}
+      name="usageTime"
+      defaultValue=""
+    />
+    {errors.category && <S.ErrorText>{errors.category.message}</S.ErrorText>}
+    
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Observações'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Endereço"
-          value={address}
-          onChangeText={text => setAddress(text)}
+      )}
+      name="description"
+      defaultValue=""
+    />
+    {errors.category && <S.ErrorText>{errors.category.message}</S.ErrorText>}
+
+    
+    <S.Title>Endereço</S.Title>
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Cidade'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Categoria"
-          value={category}
-          onChangeText={text => setCagory(text)}
+      )}
+      name="city"
+      defaultValue=""
+    />
+    {errors.category && <S.ErrorText>{errors.category.message}</S.ErrorText>}
+    
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Bairro'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Peso"
-          value={weight}
-          onChangeText={text => setWeight(text)}
+      )}
+      name="neighborhood"
+      defaultValue=""
+    />
+    {errors.category && <S.ErrorText>{errors.category.message}</S.ErrorText>}
+   
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Rua'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Largura"
-          value={width}
-          onChangeText={text => setWidth(text)}
+      )}
+      name="street"
+      defaultValue=""
+    />
+    {errors.category && <S.ErrorText>{errors.category.message}</S.ErrorText>}
+   
+    <Controller
+      control={control}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <S.TextInput
+          onBlur={onBlur}
+          onChangeText={(value) => onChange(value)}
+          value={value}
+          placeholder='Número'
         />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Altura"
-          value={height}
-          onChangeText={text => setHeight(text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Informações adicionais"
-          value={additionalInfo}
-          onChangeText={text => setAdditionalInfo(text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholderTextColor='#808080'
-          placeholder="Observações"
-          value={observations}
-          onChangeText={text => setObservations(text)}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleFormSubmit}>
-          <Text style={styles.buttonText}>Doar Item</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+      )}
+      name="number"
+      defaultValue=""
+    />
+    {errors.category && <S.ErrorText>{errors.category.message}</S.ErrorText>}
+
+    <S.UploadImageButton onPress={chooseImage}>
+        <S.UploadImageButtonText>
+          {imageUri ? 'Imagem selecionada' : 'Escolher imagem'}
+        </S.UploadImageButtonText>
+      </S.UploadImageButton>
+
+      {imageUri && <S.ImagePreview source={{ uri: imageUri }} />}
+
+    <S.ButtonSubmit title="Doar" onPress={handleSubmit(onSubmit)} />
+  
+  </S.Screen>
+  )
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#EFEFEF',
-    marginTop: 70
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 16,
-    color: 'black',
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 16,
-    color: 'black',
-  },
-  form: {
-    padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    width: '90%',
-  },
-  input: {
-    marginBottom: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 16, // Aumenta a altura dos inputs
-    borderRadius: 8,
-    backgroundColor: 'white',
-    color: 'black',
-  },
-  button: {
-    backgroundColor: '#B2DFB2',
-    borderRadius: 8,
-    marginTop: 10,
-    padding: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'gray',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
 
 
 

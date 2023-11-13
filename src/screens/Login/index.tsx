@@ -1,50 +1,106 @@
 import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import { Text, TextInput, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import * as S from './styles'
+import auth from '@react-native-firebase/auth';
+import {useToast} from '../../hooks/ui/useToast'
+import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 
 const LoginScreen = () => {
+  const [signIn, setSignIn] = useState(true)
+  const navigation = useNavigation<any>()
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation<any>()
-
-  const handleLogin = () => {
-    console.log('Login:', email, password);
-    navigation.navigate('Auth')
-  };
 
   const handleCreateAccount = () => {
-    console.log('Criar conta');
+    auth().createUserWithEmailAndPassword(email, password).then((userCredentials) => {
+    navigation.navigate('Auth')}).catch( error => { 
+      if (error.code === 'auth/email-already-in-use'){
+        useToast({message: "Email já utilizado!", type: TOASTTYPE.ERROR})
+      }
+      })
+    }
+
+  const handleLogin = () => {
+    auth()
+      .signInWithEmailAndPassword(email, password)
+      .then(() => navigation.navigate('Auth'))
+      .then(() => useToast({message: "Bem vindo!", type: TOASTTYPE.SUCCESS}))
+      .catch(() =>  useToast({message: "Tente novamente!", type: TOASTTYPE.ERROR}))
+  };
+
+  const handleToggle = () => {
+    setSignIn(prevState => !prevState);
   };
 
   return (
-    <ImageBackground source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfTk_nX-viW4OAEOlv20crsCimcC5PYGjFWgcyiXO_07_kw0eD3veCyCRggFkLtHZ9e_k&usqp=CAU'}} style={styles.container}>
-      <Text style={styles.title}>Dados de acesso</Text>
+    signIn ? (
+        <S.Container>
+        <Text style={styles.title}>Dados de acesso</Text>
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          />
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          />
+  
+          <Text style={styles.createAccountText} onPress={() =>  navigation.navigate('RecoverPassword')}>Esqueceu a senha?</Text>
+  
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
+        <View style={styles.signUpContainer}>
+          <Text style={styles.text1}>Não tem uma conta ?</Text>
+          <Text style={styles.text2} onPress={handleToggle}>Cadastre-se</Text>
+        </View>
+  
+        </S.Container>
+    ) : (
+      <View style={styles.container}>
+        <Text style={styles.title}>Cadastre-se</Text>
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          />
 
-      <TextInput
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          />
 
-      <TouchableOpacity onPress={handleCreateAccount}>
-        <Text style={styles.createAccountText}>Criar uma conta</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Entrar</Text>
-      </TouchableOpacity>
-    </ImageBackground>
+        <TextInput
+          placeholder="Confirme sua Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          />
+  
+        <TouchableOpacity style={styles.loginButton} onPress={handleCreateAccount}>
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
+        <View style={styles.signUpContainer}>
+          <Text style={styles.text1}>Já tem uma conta ?</Text>
+          <Text style={styles.text2} onPress={handleToggle}>Entrar</Text>
+        </View>
+  
+        </View>
+    )
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -57,7 +113,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#fff',
+    color: '#000',
   },
   input: {
     width: '80%',
@@ -70,12 +126,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#D3D3D3',
   },
   createAccountText: {
-    color: '#fff',
+    width: "80%",
+    alignSelf: "flex-end",
+    fontSize: 10,
+    color: '#000',
     marginBottom: 10,
   },
   loginButton: {
     backgroundColor: '#4287f5',
-    width: '40%',
+    width: '80%',
     height: 40,
     borderRadius: 5,
     justifyContent: 'center',
@@ -87,6 +146,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  signUpContainer: {
+    flexDirection: 'row',
+    paddingTop: 8
+  },
+  text1: {
+    paddingRight: 8
+  },
+  text2: {
+    color: "orange"
+  }
 });
 
 export default LoginScreen;

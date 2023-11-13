@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "290433893994",
+    "project_id": "doefacil-a2642",
+    "storage_bucket": "doefacil-a2642.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:290433893994:android:4b73dc02db0632460fac13",
+        "android_client_info": {
+          "package_name": "com.doefacil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPF_DIZ_4-mFydgimp23yf3KIUtj-rDh4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
