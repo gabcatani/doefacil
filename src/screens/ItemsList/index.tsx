@@ -5,9 +5,8 @@ import firestore from '@react-native-firebase/firestore';
 import { IDonation } from './types';
 import { useNavigation } from '@react-navigation/native';
 import { Marker, Callout} from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
-import { MMKV } from 'react-native-mmkv';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storageLocal } from '../../../App';
 
 type Region = {
   latitude: number;
@@ -22,30 +21,47 @@ const ItemsList = () => {
   const [mapReady, setMapReady] = useState(false)
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
 
-  const storage = new MMKV();
-
   const handleToggle = () => {
     setShowMap(prevState => !prevState);
+  };
+
+  const getStoredLocation = () => {
+    const storedLatitude = storageLocal.getNumber('latitude');
+    const storedLongitude = storageLocal.getNumber('longitude');
+    
+    if (storedLatitude !== null && storedLatitude !== undefined && 
+        storedLongitude !== null && storedLongitude !== undefined) {
+      return {
+        lat: storedLatitude,
+        lng: storedLongitude,
+      };
+    }
+    return null;
   };
 
 
   const calcularDistancia = (item: IDonation) => {
 
     console.log('ITEM', item);
-    console.log('CURRENT', currentRegion);
-    
-    if (!currentRegion || !item.address) {
+   
+    const loc = getStoredLocation();
+
+    console.log('LOCC',loc)
+
+    if(!loc || !item.address){
       return 'distância desconhecida';
     }
-  
+
+    console.log('loc', loc);
+    
     const rad = (x: number) => (x * Math.PI) / 180;
     const R = 6371e3;
-    const dLat = rad(item.address.lat - currentRegion.latitude);
-    const dLong = rad(item.address.lng - currentRegion.longitude);
+    const dLat = rad(item.address.lat - loc.lat);
+    const dLong = rad(item.address.lng - loc.lng);
   
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(rad(currentRegion.latitude)) * Math.cos(rad(item.address.lat)) *
+      Math.cos(rad(loc.lat)) * Math.cos(rad(item.address.lat)) *
       Math.sin(dLong / 2) * Math.sin(dLong / 2);
   
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -61,14 +77,9 @@ const ItemsList = () => {
   }, [navigation]);
 
   useEffect(() => {
-    console.log('BUSCANDO LOCALIZACAO STORAGE')
-    AsyncStorage.getItem('localizacao', (erro, localizacaoJson) => {
-      if (localizacaoJson !== null) {
-        console.log('Setando localizacao  JSON', localizacaoJson)
-        const localizacao = JSON.parse(localizacaoJson!);
-        setCurrentRegion({latitude: localizacao.latitude, longitude: localizacao.longitude});
-      }
-    });
+    console.log('BUSCANDO LOCALIZACAO STORAGE', storageLocal.getNumber('latitude'))
+
+    setCurrentRegion({latitude: storageLocal.getNumber('latitude')!, longitude: storageLocal.getNumber('longitude')!});
 
 }, []);
   

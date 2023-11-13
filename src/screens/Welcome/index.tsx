@@ -5,12 +5,14 @@ import { TouchableOpacity } from 'react-native';
 // import {StyledText, StyledView} from './styles'
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import Geolocation from '@react-native-community/geolocation';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MMKV } from 'react-native-mmkv';
 
 const WelcomeScreen = () => {
     const navigation = useNavigation<any>()
     const [user, setUser] = useState<FirebaseAuthTypes.User | null >(null);
 
+    const storage = new MMKV()
+    
     useEffect(() => {
       const unsubscrive = auth().onAuthStateChanged((_user) => {
         setUser(_user)
@@ -19,20 +21,23 @@ const WelcomeScreen = () => {
       return unsubscrive
     }, [])
 
-    useEffect(() => {
-      console.log('Chamando localização');
+    useEffect(()=> {
+
       Geolocation.getCurrentPosition(
         (position) => {
-          console.log('Posição obtida:', position);
-          const { latitude, longitude } = position.coords;
-          AsyncStorage.setItem('localizacao', JSON.stringify({ latitude, longitude }));
+          console.log('LOCALIZACAO',position);
+
+          storage.set('latitude', position.coords.latitude)
+          storage.set('longitude', position.coords.longitude)
         },
         (error) => {
-          console.error('Erro ao obter localização:', error);
+          // Veja o tipo de erro
+          console.log(error.code, error.message);
         },
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
-    }, []);
+
+    },[])
 
     const handleNextStep = () => {
       if (user) {

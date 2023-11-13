@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as S from './styles';
 import { CaretLeft } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { IParamsItem } from './types'
 import { Marker, Callout } from 'react-native-maps';
+import { useToast } from '../../hooks/ui/useToast';
+import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import firestore from '@react-native-firebase/firestore';
+import { IDonation } from '../ItemMap/types';
+import { storageLocal } from '../../../App';
+
 
 
 const ItemDetails = ({ route }) => {
@@ -11,6 +17,7 @@ const ItemDetails = ({ route }) => {
   const { item }: IParamsItem = route.params;
   const [showMap, setShowMap] = useState(false)
   const [mapReady, setMapReady] = useState(false)
+  const [solicitado, setSolicitado] = useState(false)
 
   const navigation = useNavigation()
 
@@ -18,8 +25,42 @@ const ItemDetails = ({ route }) => {
     navigation.goBack();
   };
 
-  const handleSolicitar = () => {
+  useEffect(() => {
+    async function fetchData() {
+        const solicitacaoFeita = await firestore()
+            .collection('solicitations')
+            .where('donationId', '==', item.id)
+            .where('receiverId', '==', storageLocal.getString('uid'))
+            .get();
+        
+        if(!!solicitacaoFeita.docs?.length){
+          setSolicitado(true)
+        }
+    }
+
+    fetchData();
+}, [/* dependencies */]);
+
+  const handleSolicitar = async (item: IDonation) => {
+    const solicitacao = {
+      donationId: item.id,
+      donatorId: item.donatorId,
+      receiverId: storageLocal.getString('uid'),
+    }
+
+    console.log('SOLI ', solicitacao);
     
+
+    try {
+      await firestore()
+        .collection('solicitations')
+        .add(solicitacao);
+      setSolicitado(true)
+      useToast({ message: "Solicitação realizada", type: TOASTTYPE.SUCCESS });
+    } catch (error) {
+      console.error("Erro ao adicionar doação:", error);
+      useToast({ message: "Tente Novamente", type: TOASTTYPE.ERROR });
+    }
   }
 
   const handleToggle = () => {
@@ -79,7 +120,11 @@ const ItemDetails = ({ route }) => {
             Ver localização no mapa
           </S.NameText>
         </S.ShowMapButton>
-        <S.ButtonSolicitar title="Solicitar" onPress={handleSolicitar()} />
+        {
+          !solicitado ? (<S.ButtonSolicitar title="Solicitar" onPress={()=> handleSolicitar(item)} />) : (<S.NameText>
+            Doação solicitada, aguardando confirmação.
+          </S.NameText>)
+        }
       </S.CardTextContainer>
     </S.Screen>
   );

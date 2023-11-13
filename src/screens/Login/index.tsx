@@ -5,6 +5,8 @@ import * as S from './styles'
 import auth from '@react-native-firebase/auth';
 import {useToast} from '../../hooks/ui/useToast'
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import { MMKV } from 'react-native-mmkv';
+import { storageLocal } from '../../../App';
 
 const LoginScreen = () => {
   const [signIn, setSignIn] = useState(true)
@@ -24,6 +26,7 @@ const LoginScreen = () => {
   const handleLogin = () => {
     auth()
       .signInWithEmailAndPassword(email, password)
+      .then((userCredential) => storageLocal.set('uid', userCredential.user.uid))
       .then(() => navigation.navigate('Auth'))
       .then(() => useToast({message: "Bem vindo!", type: TOASTTYPE.SUCCESS}))
       .catch(() =>  useToast({message: "Tente novamente!", type: TOASTTYPE.ERROR}))

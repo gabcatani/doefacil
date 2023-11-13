@@ -1,5 +1,6 @@
 interface IDonation {
   id: string;
+  donatorId: string;
   itemName: string;
   itemCategory: string;
   local: string
