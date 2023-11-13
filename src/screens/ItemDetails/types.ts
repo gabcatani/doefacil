@@ -1,16 +1,4 @@
-interface IDonation {
-  id: string;
-  itemName: string;
-  itemCategory: string;
-  local: string
-  address: {
-    lat: number;
-    lng: number;
-  };
-  description: string;
-  image: string;
-  usageTime: string;
-}
+import { IDonation } from "../ItemMap/types"
 
 interface IParamsItem {
   item: IDonation

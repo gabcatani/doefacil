@@ -5,14 +5,14 @@ import firestore from '@react-native-firebase/firestore';
 import { IDonation } from './types';
 import { useNavigation } from '@react-navigation/native';
 import { Marker, Callout} from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storageLocal } from '../../../App';
 
 type Region = {
   latitude: number;
   longitude: number;
-  latitudeDelta: number;
-  longitudeDelta: number;
+  // latitudeDelta: number;
+  // longitudeDelta: number;
 };
 
 const ItemsList = () => {
@@ -21,10 +21,53 @@ const ItemsList = () => {
   const [mapReady, setMapReady] = useState(false)
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
 
-  const storage = new MMKV();
-
   const handleToggle = () => {
     setShowMap(prevState => !prevState);
+  };
+
+  const getStoredLocation = () => {
+    const storedLatitude = storageLocal.getNumber('latitude');
+    const storedLongitude = storageLocal.getNumber('longitude');
+    
+    if (storedLatitude !== null && storedLatitude !== undefined && 
+        storedLongitude !== null && storedLongitude !== undefined) {
+      return {
+        lat: storedLatitude,
+        lng: storedLongitude,
+      };
+    }
+    return null;
+  };
+
+
+  const calcularDistancia = (item: IDonation) => {
+
+    console.log('ITEM', item);
+   
+    const loc = getStoredLocation();
+
+    console.log('LOCC',loc)
+
+    if(!loc || !item.address){
+      return 'distância desconhecida';
+    }
+
+    console.log('loc', loc);
+    
+    const rad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371e3;
+    const dLat = rad(item.address.lat - loc.lat);
+    const dLong = rad(item.address.lng - loc.lng);
+  
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(rad(loc.lat)) * Math.cos(rad(item.address.lat)) *
+      Math.sin(dLong / 2) * Math.sin(dLong / 2);
+  
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; 
+  
+    return `${distance.toFixed(0)} metros`;
   };
 
   const navigation = useNavigation();
@@ -33,28 +76,12 @@ const ItemsList = () => {
     navigation.navigate('ItemDetails', { item });
   }, [navigation]);
 
-
   useEffect(() => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        console.log('position', position);
-        const { latitude, longitude } = position.coords;
-        setCurrentRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-  
-        storage.set('latitude', JSON.stringify(latitude));
-        storage.set('longitude', JSON.stringify(longitude));
-      },
-      (error) => {
-        console.error(error);
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-    );
-  }, []);
+    console.log('BUSCANDO LOCALIZACAO STORAGE', storageLocal.getNumber('latitude'))
+
+    setCurrentRegion({latitude: storageLocal.getNumber('latitude')!, longitude: storageLocal.getNumber('longitude')!});
+
+}, []);
   
 
   useEffect(() => {
@@ -82,12 +109,12 @@ const ItemsList = () => {
         </S.ImagemContainer>
         <S.CardTextContainer>
           <S.NameText>{item.itemName}</S.NameText>
-          <S.CategoryText numberOfLines={1} ellipsizeMode="tail">{item.local}</S.CategoryText>
+          <S.CategoryText numberOfLines={1} ellipsizeMode="tail">Está a {calcularDistancia(item)} de você</S.CategoryText>
         </S.CardTextContainer>
       </S.Card>
       </TouchableOpacity>
     ),
-    []
+    [currentRegion]
   );
 
   const renderDonationMarker = (item: IDonation) => (

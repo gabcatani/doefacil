@@ -7,10 +7,9 @@ import {useToast} from '../../hooks/ui/useToast'
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 import firestore from '@react-native-firebase/firestore';
 import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native-image-picker';
-import { IDonationForms } from './types'
 import storage from '@react-native-firebase/storage';
 import axios from 'axios';
-import { MMKV } from 'react-native-mmkv';
+import { storageLocal } from '../../../App';
 
 const apiKey = "AIzaSyBnb3_YFy1mvVbB6GV5YBc44_ZjXZ2fNNE";
 
@@ -18,16 +17,19 @@ const DonationForm = () => {
   
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  const storage = new MMKV()
 
   const getStoredLocation = () => {
-    const storedLatitude = storage.getString('latitude');
-    const storedLongitude = storage.getString('longitude');
+    const storedLatitude = storageLocal.getNumber('latitude');
+    const storedLongitude = storageLocal.getNumber('longitude');
+
+    console.log('STORED', {storedLatitude, storedLongitude});
+    
+
     if (storedLatitude !== null && storedLatitude !== undefined && 
         storedLongitude !== null && storedLongitude !== undefined) {
       return {
-        lat: JSON.parse(storedLatitude),
-        lng: JSON.parse(storedLongitude),
+        lat: storedLatitude,
+        lng: storedLongitude,
       };
     }
     return null;
@@ -57,6 +59,9 @@ const DonationForm = () => {
   const getAddressCoordinates = async (address: string) => {
     const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${apiKey}`);
     
+console.log('RESPONSE', response);
+
+
     if (response.data.results && response.data.results.length > 0) {
       const { lat, lng } = response.data.results[0].geometry.location;
       return { lat, lng };

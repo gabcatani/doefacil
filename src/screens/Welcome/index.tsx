@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
 // import {StyledText, StyledView} from './styles'
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import Geolocation from '@react-native-community/geolocation';
+import { MMKV } from 'react-native-mmkv';
 
 const WelcomeScreen = () => {
     const navigation = useNavigation<any>()
     const [user, setUser] = useState<FirebaseAuthTypes.User | null >(null);
 
+    const storage = new MMKV()
+    
     useEffect(() => {
       const unsubscrive = auth().onAuthStateChanged((_user) => {
         setUser(_user)
@@ -16,6 +20,24 @@ const WelcomeScreen = () => {
 
       return unsubscrive
     }, [])
+
+    useEffect(()=> {
+
+      Geolocation.getCurrentPosition(
+        (position) => {
+          console.log('LOCALIZACAO',position);
+
+          storage.set('latitude', position.coords.latitude)
+          storage.set('longitude', position.coords.longitude)
+        },
+        (error) => {
+          // Veja o tipo de erro
+          console.log(error.code, error.message);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      );
+
+    },[])
 
     const handleNextStep = () => {
       if (user) {
