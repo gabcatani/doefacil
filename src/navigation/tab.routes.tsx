@@ -61,6 +61,16 @@ export default function TabRoutes() {
           ),
         }}
       />
+       <Tab.Screen
+        name="Solicitação"
+        component={Solicitation}
+        options={{
+          tabBarLabel: 'Solicitação',
+          tabBarIcon: ({color, size}) => (
+            <StarFour color="teal" weight="duotone" size={32} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }

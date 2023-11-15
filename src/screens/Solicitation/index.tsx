@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, TextInput, Button, ScrollView, Text, StyleSheet } from 'react-native';
 import * as S from './styles';
 import { CaretLeft } from 'phosphor-react-native';
@@ -7,7 +7,6 @@ import firestore from '@react-native-firebase/firestore';
 import { IDonation } from '../ItemMap/types';
 import { storageLocal } from '../../../App';
 
-// Estilos
 const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
@@ -74,6 +73,12 @@ const styles = StyleSheet.create({
     pendente: {
         backgroundColor: 'blue',
     },
+    messageDate: {
+        fontSize: 10,
+        color: 'gray',
+        alignSelf: 'flex-end',
+        marginHorizontal: 5,
+    },
 });
 
 type Message = {
@@ -82,7 +87,7 @@ type Message = {
     date: Date
 }
 
-type Solicitation = {
+type ISolicitation = {
     id: string,
     donationId: string,
     donatorId: string,
@@ -92,13 +97,20 @@ type Solicitation = {
     delivered: boolean
 }
 
+type IChat = {
+    date: Date,
+    solicitationId: string,
+    uid: string,
+    value: string
+}
+
 // Componente Chat
 const Solicitation = () => {
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [text, setText] = useState('');
     const [status, setStatus] = useState('pendente');
     const [delivered, setDelivered] = useState(false);
-    const [solicitation, setSolicitation] = useState<Solicitation>({
+    const [solicitation, setSolicitation] = useState<ISolicitation>({
         id: 'ae6Yi4htQCu2xTVdBvLH',
         donationId: '7Tuek5aJ41xLXOkD68Hi',
         donatorId: 'OPGO44lRhXVzpNpqqwZBWcwaPoR2',
@@ -108,11 +120,69 @@ const Solicitation = () => {
         delivered: false
     });
 
-
+    const scrollViewRef = useRef<ScrollView>(null);
 
     const [donation, setDonation] = useState<IDonation>();
 
     const navigation = useNavigation()
+
+    useEffect(() => {
+        if (scrollViewRef.current) {
+            scrollViewRef.current.scrollToEnd({ animated: true });
+        }
+    }, [messages.length]);
+
+    useEffect(() => {
+        // Função para buscar mensagens
+        const fetchMessages = async () => {
+            const messagesSnapshot = await firestore()
+                .collection('chats')
+                .orderBy('date')
+                .get();
+
+            const fetchedMessages = messagesSnapshot.docs.map(doc => {
+                const firebaseData = doc.data();
+                const myText = firebaseData.uid === storageLocal.getString('uid');
+                return {
+                    text: firebaseData.value,
+                    myText: myText,
+                    date: firebaseData.date.toDate() // Convertendo o timestamp do Firebase para um objeto Date
+                };
+            });
+
+            setMessages(fetchedMessages);
+        };
+
+        // Buscar mensagens na montagem do componente
+        fetchMessages();
+
+        // Configurando o intervalo para buscar novas mensagens
+        const interval = setInterval(() => {
+            fetchMessages();
+        }, 3000);
+
+        // Configurando o listener do Firebase
+        const unsubscribe = firestore()
+            .collection('chats')
+            .orderBy('date')
+            .onSnapshot(snapshot => {
+                const updatedMessages = snapshot.docs.map(doc => {
+                    const firebaseData = doc.data();
+                    return {
+                        text: firebaseData.value,
+                        myText: firebaseData.uid === storageLocal.getString('uid'),
+                        date: firebaseData.date.toDate()
+                    };
+                });
+                setMessages(updatedMessages);
+            });
+
+        // Limpando o intervalo e o listener quando o componente for desmontado
+        return () => {
+            clearInterval(interval);
+            unsubscribe();
+        };
+    }, []);
 
     useEffect(() => {
 
@@ -138,6 +208,15 @@ const Solicitation = () => {
     const sendMessage = () => {
         if (text) {
 
+            const message: IChat = {
+                date: new Date(),
+                solicitationId: solicitation.id,
+                uid: storageLocal.getString('uid')!,
+                value: text
+            }
+
+            firestore().collection('chats').add(message);
+
             setMessages([...messages, { text, myText: true, date: new Date() }]);
             setText('');
         }
@@ -148,7 +227,7 @@ const Solicitation = () => {
             case 'aceita':
                 return styles.aceita;
             case 'entregue':
-                    return styles.aceita;
+                return styles.aceita;
             case 'recusada':
                 return styles.recusada;
             case 'pendente':
@@ -158,11 +237,11 @@ const Solicitation = () => {
         }
     };
 
-    const getStatus = (solicitation: Solicitation) => {
+    const getStatus = (solicitation: ISolicitation) => {
 
         console.log('SOLI 2', solicitation);
 
-        if(solicitation.delivered){
+        if (solicitation.delivered) {
             return 'entregue'
         }
 
@@ -182,20 +261,21 @@ const Solicitation = () => {
 
     }
 
-    const aceitarSolicitacao = (solicitation: Solicitation) => {
+    const aceitarSolicitacao = (solicitation: ISolicitation) => {
 
         solicitation.accepted = true;
+        solicitation.rejected = false;
 
         setSolicitation(solicitation)
         setStatus(getStatus(solicitation))
 
-
         firestore().collection('solicitations').doc(solicitation.id).update({
-            accepted: true
+            accepted: true,
+            rejected: false
         });
     }
 
-    const cancelarSolicitacao = (solicitation: Solicitation) => {
+    const cancelarSolicitacao = (solicitation: ISolicitation) => {
 
         solicitation.accepted = false;
         solicitation.rejected = true;
@@ -210,7 +290,7 @@ const Solicitation = () => {
         });
     }
 
-    const entregarSolicitacao = (solicitation: Solicitation) => {
+    const entregarSolicitacao = (solicitation: ISolicitation) => {
 
         solicitation.delivered = true;
 
@@ -262,13 +342,16 @@ const Solicitation = () => {
                 <Text style={styles.chatTitle}>Obrigado por realizar essa doação! Você está ajudando o mundo a se tornar um lugar melhor :D</Text>
             )}
 
-            {!delivered && (<View  style={styles.chatContainer}>
+            {!delivered && (<View style={styles.chatContainer}>
                 <Text style={styles.chatTitle}>Combine a entrega</Text>
-                <ScrollView style={styles.chatContainer}>
+                <ScrollView style={styles.chatContainer} ref={scrollViewRef}>
                     {messages.map((msg, index) => (
-                        <Text key={index} style={msg.myText ? styles.minhaMensagem : styles.outraMensagem}>
-                            {msg.text}
-                        </Text>
+                        <View key={index} style={msg.myText ? styles.minhaMensagem : styles.outraMensagem}>
+                            <Text>{msg.text}</Text>
+                            <Text style={styles.messageDate}>
+                                {msg.date.toLocaleDateString('pt-BR')} {msg.date.toLocaleTimeString('pt-BR')}
+                            </Text>
+                        </View>
                     ))}
                 </ScrollView>
                 <View style={styles.inputContainer}>
