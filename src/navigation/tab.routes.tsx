@@ -3,10 +3,10 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Heart, Cube, Article, MapTrifold, StarFour} from 'phosphor-react-native';
 import Home from '../screens/Infomations';
 import Avaliation from '../screens/Avaliation';
-import Mural from '../screens/Mural';
 import ItemsList from '../screens/ItemsList';
 import Donation from '../screens/Donation';
 import Solicitation from '../screens/Solicitation';
+import Solicitations from '../screens/Solicitations';
 
 const Tab = createBottomTabNavigator();
 
@@ -42,8 +42,8 @@ export default function TabRoutes() {
         }}
       />
       <Tab.Screen
-        name="Feed"
-        component={Mural}
+        name="Solicitations"
+        component={Solicitations}
         options={{
           tabBarLabel: 'Solicitações',
           tabBarIcon: ({color, size}) => (
@@ -56,16 +56,6 @@ export default function TabRoutes() {
         component={Avaliation}
         options={{
           tabBarLabel: 'Avalie',
-          tabBarIcon: ({color, size}) => (
-            <StarFour color="teal" weight="duotone" size={32} />
-          ),
-        }}
-      />
-       <Tab.Screen
-        name="Solicitação"
-        component={Solicitation}
-        options={{
-          tabBarLabel: 'Solicitação',
           tabBarIcon: ({color, size}) => (
             <StarFour color="teal" weight="duotone" size={32} />
           ),

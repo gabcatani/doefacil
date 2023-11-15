@@ -87,7 +87,7 @@ type Message = {
     date: Date
 }
 
-type ISolicitation = {
+export type ISolicitation = {
     id: string,
     donationId: string,
     donatorId: string,
@@ -104,27 +104,38 @@ type IChat = {
     value: string
 }
 
+type IParamsSolicitation = {
+    id: string
+}
+
 // Componente Chat
-const Solicitation = () => {
+const Solicitation = ({ route }) => {
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [text, setText] = useState('');
     const [status, setStatus] = useState('pendente');
     const [delivered, setDelivered] = useState(false);
-    const [solicitation, setSolicitation] = useState<ISolicitation>({
-        id: 'ae6Yi4htQCu2xTVdBvLH',
-        donationId: '7Tuek5aJ41xLXOkD68Hi',
-        donatorId: 'OPGO44lRhXVzpNpqqwZBWcwaPoR2',
-        receiverId: 'OPGO44lRhXVzpNpqqwZBWcwaPoR2',
-        rejected: false,
-        accepted: false,
-        delivered: false
-    });
+    const [solicitation, setSolicitation] = useState<ISolicitation>();
 
     const scrollViewRef = useRef<ScrollView>(null);
 
     const [donation, setDonation] = useState<IDonation>();
 
     const navigation = useNavigation()
+
+    console.log('param:;:::    ', route.params);
+
+    const { id }: IParamsSolicitation = route.params;
+
+    useEffect(() => {        
+
+        async function getSolicitation() {
+            const soli = await firestore().collection('solicitations').doc(id).get();
+
+            setSolicitation(soli.data() as ISolicitation);
+        }
+
+        getSolicitation()
+    }, [])
 
     useEffect(() => {
         if (scrollViewRef.current) {
@@ -133,7 +144,6 @@ const Solicitation = () => {
     }, [messages.length]);
 
     useEffect(() => {
-        // Função para buscar mensagens
         const fetchMessages = async () => {
             const messagesSnapshot = await firestore()
                 .collection('chats')
@@ -199,14 +209,14 @@ const Solicitation = () => {
         }
 
         getDonation()
-    }, [])
+    }, [solicitation])
 
     const goBack = () => {
         navigation.goBack();
     };
 
     const sendMessage = () => {
-        if (text) {
+        if (text && solicitation) {
 
             const message: IChat = {
                 date: new Date(),
@@ -238,8 +248,6 @@ const Solicitation = () => {
     };
 
     const getStatus = (solicitation: ISolicitation) => {
-
-        console.log('SOLI 2', solicitation);
 
         if (solicitation.delivered) {
             return 'entregue'
@@ -317,26 +325,29 @@ const Solicitation = () => {
                 </Text>
             </View>
 
-            {solicitation.donatorId == storageLocal.getString('uid') && !solicitation.accepted && !delivered && (
-                <Button
-                    title="Aceitar solicitação"
-                    onPress={() => aceitarSolicitacao(solicitation!)}
-                    color="green"
-                />)}
+            {!!solicitation && (<View>
 
-            {solicitation.donatorId == storageLocal.getString('uid') && solicitation.accepted && !delivered && (
-                <Button
-                    title="Marcar como entregue"
-                    onPress={() => entregarSolicitacao(solicitation!)}
-                    color="blue"
-                />)}
+                {solicitation.donatorId == storageLocal.getString('uid') && !solicitation.accepted && !delivered && (
+                    <Button
+                        title="Aceitar solicitação"
+                        onPress={() => aceitarSolicitacao(solicitation!)}
+                        color="green"
+                    />)}
 
-            {solicitation.donatorId == storageLocal.getString('uid') && solicitation.accepted && !delivered && (
-                <Button
-                    title="Cancelar doação"
-                    onPress={() => cancelarSolicitacao(solicitation!)}
-                    color="red"
-                />)}
+                {solicitation.donatorId == storageLocal.getString('uid') && solicitation.accepted && !delivered && (
+                    <Button
+                        title="Marcar como entregue"
+                        onPress={() => entregarSolicitacao(solicitation!)}
+                        color="blue"
+                    />)}
+
+                {solicitation.donatorId == storageLocal.getString('uid') && solicitation.accepted && !delivered && (
+                    <Button
+                        title="Cancelar doação"
+                        onPress={() => cancelarSolicitacao(solicitation!)}
+                        color="red"
+                    />)}
+            </View>)}
 
             {delivered && (
                 <Text style={styles.chatTitle}>Obrigado por realizar essa doação! Você está ajudando o mundo a se tornar um lugar melhor :D</Text>
