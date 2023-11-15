@@ -10,14 +10,12 @@ const CenteredView = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
-  background-color: #DECBA3;
+  /* background-color: #DECBA3; */
 `;
 
 const SplashScreen = () => {
   const navigation = useNavigation<any>()
   const [user, setUser] = useState<FirebaseAuthTypes.User | null >(null);
-
-//   const storage = new MMKV()
   
   useEffect(() => {
     const unsubscrive = auth().onAuthStateChanged((_user) => {
@@ -26,24 +24,6 @@ const SplashScreen = () => {
 
     return unsubscrive
   }, [])
-
-//   useEffect(()=> {
-
-//     Geolocation.getCurrentPosition(
-//       (position) => {
-//         console.log('LOCALIZACAO',position);
-
-//         storage.set('latitude', position.coords.latitude)
-//         storage.set('longitude', position.coords.longitude)
-//       },
-//       (error) => {
-//         // Veja o tipo de erro
-//         console.log(error.code, error.message);
-//       },
-//       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-//     );
-
-//   },[])
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,7 +43,7 @@ const SplashScreen = () => {
         source={require('../../../assets/animations/splash.json')}
         autoPlay
         loop={false}
-        style={{ width: 200, height: 200 }}
+        style={{ width: 400, height: 400 }}
         resizeMode='cover'
       />
     </CenteredView>

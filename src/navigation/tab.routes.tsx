@@ -1,8 +1,8 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Heart, Cube, Article, MapTrifold, Gear} from 'phosphor-react-native';
+import {Heart, Cube, Article, MapTrifold, StarFour} from 'phosphor-react-native';
 import Home from '../screens/Infomations';
-import Config from '../screens/Config';
+import Avaliation from '../screens/Avaliation';
 import Mural from '../screens/Mural';
 import ItemsList from '../screens/ItemsList';
 import Donation from '../screens/Donation';
@@ -44,19 +44,19 @@ export default function TabRoutes() {
         name="Feed"
         component={Mural}
         options={{
-          tabBarLabel: 'Mural',
+          tabBarLabel: 'Solicitações',
           tabBarIcon: ({color, size}) => (
             <Article color="teal" weight="duotone" size={32} />
           ),
         }}
       />
       <Tab.Screen
-        name="Config"
-        component={Config}
+        name="Avaliation"
+        component={Avaliation}
         options={{
-          tabBarLabel: 'Configurações',
+          tabBarLabel: 'Avalie',
           tabBarIcon: ({color, size}) => (
-            <Gear color="teal" weight="duotone" size={32} />
+            <StarFour color="teal" weight="duotone" size={32} />
           ),
         }}
       />
