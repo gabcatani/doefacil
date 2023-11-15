@@ -6,6 +6,7 @@ import Config from '../screens/Config';
 import Mural from '../screens/Mural';
 import ItemsList from '../screens/ItemsList';
 import Donation from '../screens/Donation';
+import Solicitation from '../screens/Solicitation';
 
 const Tab = createBottomTabNavigator();
 
@@ -52,7 +53,7 @@ export default function TabRoutes() {
       />
       <Tab.Screen
         name="Config"
-        component={Config}
+        component={Solicitation}
         options={{
           tabBarLabel: 'Configurações',
           tabBarIcon: ({color, size}) => (
