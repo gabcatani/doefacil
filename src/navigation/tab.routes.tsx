@@ -6,6 +6,7 @@ import Avaliation from '../screens/Avaliation';
 import Mural from '../screens/Mural';
 import ItemsList from '../screens/ItemsList';
 import Donation from '../screens/Donation';
+import Solicitation from '../screens/Solicitation';
 
 const Tab = createBottomTabNavigator();
 

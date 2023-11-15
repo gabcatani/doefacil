@@ -46,6 +46,9 @@ const ItemDetails = ({ route }) => {
       donationId: item.id,
       donatorId: item.donatorId,
       receiverId: storageLocal.getString('uid'),
+      accepted: false,
+      rejected: false,
+      delivered: false
     }
 
     console.log('SOLI ', solicitacao);

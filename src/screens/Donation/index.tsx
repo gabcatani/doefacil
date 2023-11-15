@@ -105,18 +105,19 @@ console.log('RESPONSE', response);
 
     try {
       await firestore()
-        .collection('donations')
-        .add({
-          itemName: data.name,
-          itemCategory: data.category,
-          usageTime: data.usageTime,
-          description: data.description,
-          local: address,
-          address: {
-            lat: storedLocation.lat,
-            lng: storedLocation.lng,
-          },
-          image: imageUrl ?? ''
+      .collection('donations')
+      .add({
+        itemName: data.name,
+        itemCategory: data.category,
+        donatorId: storageLocal.getString('uid'),
+        usageTime: data.usageTime,
+        description: data.description,
+        local: address,
+        address: {
+          lat: lat,
+          lng: lng,
+        },
+        image: imageUrl ?? ''
         });
       // reset();
       // setImageUri(null)
