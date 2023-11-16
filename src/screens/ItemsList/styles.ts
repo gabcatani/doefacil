@@ -1,5 +1,6 @@
 import styled from 'styled-components/native';
 import MapView from 'react-native-maps';
+import { View } from 'react-native';
 
 const Screen = styled.View`
   flex: 1;
@@ -77,8 +78,25 @@ const Map = styled(MapView)`
 `;
 
 const MarkerImage = styled.Image`
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  background-color: transparent;
+  border: 2px solid white;
+`;
+
+const PinShaft = styled(View)`
+  width: 0; 
+  height: 0; 
+  borderLeftWidth: 10px; 
+  borderRightWidth: 10px; 
+  borderBottomWidth: 20px;
+  backgroundColor: transparent;
+  borderLeftColor: transparent; 
+  borderRightColor: transparent; 
+  borderBottomColor: black;
+  alignSelf: center;
+  transform: rotate(180deg);
 `;
 
 const CalloutTitle = styled.Text`
@@ -95,7 +113,8 @@ export {
   // BackgroundContainer,
   Header, 
   HeaderText,
-  Card, 
+  Card,
+  PinShaft,
   CardTextContainer,
   ImagemContainer, 
   ItemImage, 

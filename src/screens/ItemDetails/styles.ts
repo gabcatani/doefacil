@@ -88,9 +88,19 @@ const ButtonSolicitar = styled.Button`
   width: 100%;
   `;
 
+  const ButtonDelete = styled.Button`
+  background-color: red;
+  padding: 15px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  width: 100%;
+  `;
+
 export { 
   Screen,
   GoBackButton,
+  ButtonDelete,
   Header, 
   HeaderText,
   BoldText,

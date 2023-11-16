@@ -6,6 +6,7 @@ import ItemMap from '../screens/ItemMap'
 import Splash from '../screens/Splash'
 import AvaliationReturn from '../screens/AvaliationReturn'
 import TabRoutes from './tab.routes'
+import Solicitation from '../screens/Solicitation'
 
 const Stack = createNativeStackNavigator()
 
@@ -23,6 +24,7 @@ export default function StackRoutes() {
         <Stack.Screen name="ItemDetails" component={ItemDetails} />
         <Stack.Screen name="ItemMap" component={ItemMap} />
         <Stack.Screen name="AvaliationReturn" component={AvaliationReturn} />
+        <Stack.Screen name="Solicitation" component={Solicitation} />
         </Stack.Navigator>
     )
     }
