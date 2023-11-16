@@ -3,7 +3,7 @@ import { FlatList, TouchableOpacity, ActivityIndicator, View } from 'react-nativ
 import * as S from './styles';
 import firestore from '@react-native-firebase/firestore';
 import { IDonation } from './types';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { Marker, Callout } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { MMKV } from 'react-native-mmkv';
@@ -20,6 +20,8 @@ const ItemsList = () => {
   const [showMap, setShowMap] = useState(false)
   const [mapReady, setMapReady] = useState(false)
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+
+  const isFocused = useIsFocused();
 
   const storage = new MMKV();
   const navigation = useNavigation();
@@ -59,17 +61,36 @@ const ItemsList = () => {
     const fetchDonations = async () => {
       try {
         const querySnapshot = await firestore().collection('donations').get();
-        const data = querySnapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        })) as IDonation[]
-        setDonations(data);
+        const donationsPromises = querySnapshot.docs.map(async (doc) => {
+          const solicitations = await firestore().collection('solicitations').where('donationId', '==', doc.id).where('accepted', '==', true).get();
+          
+
+
+          if(doc.data()?.itemName == 'Fogao'){
+
+            console.log(doc.id);
+
+            console.log('SOLI2', solicitations.docs);
+          }
+          
+          if (!solicitations.docs.length) {
+            return { ...doc.data(), id: doc.id };
+          }
+          return null;
+        });
+        
+        const filteredDonations = (await Promise.all(donationsPromises)).filter(doc => doc !== null) as IDonation[];
+
+        // console.log('DONATIONS', filteredDonations);
+        
+
+        setDonations(filteredDonations);
       } catch (error) {
         console.error("Erro ao buscar doações: ", error);
       }
     };
     fetchDonations();
-  }, []);
+  }, [isFocused]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: IDonation; index: number }) => (

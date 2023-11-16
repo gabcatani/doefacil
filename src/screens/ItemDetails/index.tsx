@@ -9,6 +9,7 @@ import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 import firestore from '@react-native-firebase/firestore';
 import { IDonation } from '../ItemMap/types';
 import { storageLocal } from '../../../App';
+import { View } from 'react-native';
 
 
 
@@ -18,6 +19,7 @@ const ItemDetails = ({ route }) => {
   const [showMap, setShowMap] = useState(false)
   const [mapReady, setMapReady] = useState(false)
   const [solicitado, setSolicitado] = useState(false)
+  const [isMyDonation, setIsMyDonation] = useState(true)
 
   const navigation = useNavigation()
 
@@ -26,20 +28,32 @@ const ItemDetails = ({ route }) => {
   };
 
   useEffect(() => {
+
+    setIsMyDonation(item.donatorId == storageLocal.getString('uid'))
+
     async function fetchData() {
-        const solicitacaoFeita = await firestore()
-            .collection('solicitations')
-            .where('donationId', '==', item.id)
-            .where('receiverId', '==', storageLocal.getString('uid'))
-            .get();
-        
-        if(!!solicitacaoFeita.docs?.length){
-          setSolicitado(true)
-        }
+      const solicitacaoFeita = await firestore()
+        .collection('solicitations')
+        .where('donationId', '==', item.id)
+        .where('receiverId', '==', storageLocal.getString('uid'))
+        .get();
+
+      if (!!solicitacaoFeita.docs?.length) {
+        setSolicitado(true)
+      }
     }
 
     fetchData();
-}, [/* dependencies */]);
+  }, [/* dependencies */]);
+
+  const handleDelete = async (item: IDonation) => {
+
+    firestore().collection('donations').doc(item.id).delete();
+
+    useToast({message: 'Anúncio removido com sucesso!', type: TOASTTYPE.SUCCESS})
+
+    navigation.navigate('Maps');
+  }
 
   const handleSolicitar = async (item: IDonation) => {
     const solicitacao = {
@@ -52,7 +66,7 @@ const ItemDetails = ({ route }) => {
     }
 
     console.log('SOLI ', solicitacao);
-    
+
 
     try {
       await firestore()
@@ -123,11 +137,15 @@ const ItemDetails = ({ route }) => {
             Ver localização no mapa
           </S.NameText>
         </S.ShowMapButton>
-        {
-          !solicitado ? (<S.ButtonSolicitar title="Solicitar" onPress={()=> handleSolicitar(item)} />) : (<S.NameText>
-            Doação solicitada, aguardando confirmação.
-          </S.NameText>)
-        }
+        {!isMyDonation && (<View>
+          {
+            !solicitado ? (<S.ButtonSolicitar title="Solicitar" onPress={() => handleSolicitar(item)} />) : (<S.NameText>
+              Doação solicitada, aguardando confirmação.
+            </S.NameText>)
+          }
+        </View>)}
+
+        {isMyDonation && (<S.ButtonDelete title="Deletar anúncio" onPress={() => handleDelete(item)} />)}
       </S.CardTextContainer>
     </S.Screen>
   );

@@ -1,6 +1,6 @@
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, Button, ScrollView, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Button, ScrollView, Text, StyleSheet, Image } from 'react-native';
 import * as S from './styles';
 import { CaretLeft } from 'phosphor-react-native';
 import firestore from '@react-native-firebase/firestore';
@@ -11,6 +11,12 @@ const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
         padding: 10,
+    },
+    itemImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        marginRight: 10,
     },
     inputContainer: {
         flexDirection: 'row',
@@ -115,27 +121,37 @@ const Solicitation = ({ route }) => {
     const [status, setStatus] = useState('pendente');
     const [delivered, setDelivered] = useState(false);
     const [solicitation, setSolicitation] = useState<ISolicitation>();
+    const [donation, setDonation] = useState<IDonation>();
 
     const scrollViewRef = useRef<ScrollView>(null);
 
-    const [donation, setDonation] = useState<IDonation>();
-
     const navigation = useNavigation()
-
-    console.log('param:;:::    ', route.params);
 
     const { id }: IParamsSolicitation = route.params;
 
-    useEffect(() => {        
+    useEffect(() => {
 
         async function getSolicitation() {
-            const soli = await firestore().collection('solicitations').doc(id).get();
+            const soliDoc = await firestore().collection('solicitations').doc(id).get();
 
-            setSolicitation(soli.data() as ISolicitation);
+            const soli = soliDoc.data()! as ISolicitation;
+            soli.id = soliDoc.id;
+
+            setInitialValues(soli);
+
+            setSolicitation(soli);
         }
 
         getSolicitation()
-    }, [])
+    }, [id])
+
+    const setInitialValues = (soli: ISolicitation) => {
+
+        setDelivered(soli.delivered)
+
+        setStatus(getStatus(soli))
+
+    }
 
     useEffect(() => {
         if (scrollViewRef.current) {
@@ -147,8 +163,13 @@ const Solicitation = ({ route }) => {
         const fetchMessages = async () => {
             const messagesSnapshot = await firestore()
                 .collection('chats')
+                .where('solicitationId', '==', solicitation?.id ?? '')
                 .orderBy('date')
                 .get();
+
+            if (!messagesSnapshot) {
+                return;
+            }
 
             const fetchedMessages = messagesSnapshot.docs.map(doc => {
                 const firebaseData = doc.data();
@@ -174,8 +195,13 @@ const Solicitation = ({ route }) => {
         // Configurando o listener do Firebase
         const unsubscribe = firestore()
             .collection('chats')
+            .where('solicitationId', '==', solicitation?.id ?? '')
             .orderBy('date')
             .onSnapshot(snapshot => {
+                if (!snapshot) {
+                    return;
+                }
+
                 const updatedMessages = snapshot.docs.map(doc => {
                     const firebaseData = doc.data();
                     return {
@@ -192,13 +218,16 @@ const Solicitation = ({ route }) => {
             clearInterval(interval);
             unsubscribe();
         };
-    }, []);
+    }, [solicitation]);
 
     useEffect(() => {
 
         async function getDonation() {
 
-            console.log('SOLI', solicitation);
+            if (!solicitation) {
+                return;
+            }
+
 
             const donation = await firestore()
                 .collection('donations')
@@ -249,6 +278,10 @@ const Solicitation = ({ route }) => {
 
     const getStatus = (solicitation: ISolicitation) => {
 
+        if (!solicitation) {
+            return '';
+        }
+
         if (solicitation.delivered) {
             return 'entregue'
         }
@@ -295,6 +328,9 @@ const Solicitation = ({ route }) => {
         firestore().collection('solicitations').doc(solicitation.id).update({
             accepted: false,
             rejected: true
+        }).catch((erro) => {
+            console.log(erro);
+
         });
     }
 
@@ -318,12 +354,13 @@ const Solicitation = ({ route }) => {
                     <CaretLeft color="gray" weight="bold" size={32} />
                 </S.GoBackButton>
             </S.Header>
-            <View style={styles.header}>
+            {!!solicitation && !!donation && (<View style={styles.header}>
+                <Image source={{ uri: donation?.image }} style={styles.itemImage} />
                 <Text style={styles.tituloAnuncio}>{donation?.itemName}</Text>
                 <Text style={[styles.status, getStatusStyle(status)]}>
                     {getStatus(solicitation!).toUpperCase()}
                 </Text>
-            </View>
+            </View>)}
 
             {!!solicitation && (<View>
 
@@ -353,8 +390,21 @@ const Solicitation = ({ route }) => {
                 <Text style={styles.chatTitle}>Obrigado por realizar essa doação! Você está ajudando o mundo a se tornar um lugar melhor :D</Text>
             )}
 
+            {status == 'pendente' && (
+                <Text style={styles.chatTitle}>Sua doação ainda não foi aceita pelo doador. Converse com ele no chat abaixo.</Text>
+            )}
+
+            {status == 'recusada' && (
+                <Text style={styles.chatTitle}>{'Infelizmente sua solicitação de doação não foi aceita pelo doador :('}</Text>
+            )}
+
+            {status == 'aceita' && (
+                <Text style={styles.chatTitle}>{'Obaaa! Sua solicitação foi aceita. Agora combine a entrega com o doador! :D'}</Text>
+            )}
+
+
             {!delivered && (<View style={styles.chatContainer}>
-                <Text style={styles.chatTitle}>Combine a entrega</Text>
+                <Text style={styles.chatTitle}>CHAT</Text>
                 <ScrollView style={styles.chatContainer} ref={scrollViewRef}>
                     {messages.map((msg, index) => (
                         <View key={index} style={msg.myText ? styles.minhaMensagem : styles.outraMensagem}>

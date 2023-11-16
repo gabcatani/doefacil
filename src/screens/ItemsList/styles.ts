@@ -90,8 +90,7 @@ const PinShaft = styled(View)`
   height: 0; 
   borderLeftWidth: 10px; 
   borderRightWidth: 10px; 
-  borderBottomWidth: 20px; 
-  borderStyle: solid;
+  borderBottomWidth: 20px;
   backgroundColor: transparent;
   borderLeftColor: transparent; 
   borderRightColor: transparent; 

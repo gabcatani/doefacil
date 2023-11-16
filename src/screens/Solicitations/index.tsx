@@ -4,7 +4,7 @@ import { storageLocal } from '../../../App';
 import firestore from '@react-native-firebase/firestore';
 import Solicitation, { ISolicitation } from '../Solicitation';
 import { IDonation } from '../ItemMap/types';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 
 type ISolicitationItem = {
     id: string,
@@ -19,12 +19,11 @@ const Solicitations = () => {
 
     const navigation = useNavigation<any>()
 
+    const isFocused = useIsFocused();
+
     const handleItemPress = useCallback((solicitationId: string) => {
 
-            console.log('SOLICI ID', solicitationId);
-            
-
-        navigation.navigate(Solicitation, { id: solicitationId });
+        navigation.navigate('Solicitation', { id: solicitationId });
       }, [navigation]);
 
     const getStatus = (solicitation: ISolicitation) => {
@@ -67,80 +66,57 @@ const Solicitations = () => {
 
 
     useEffect(() => {
+        console.log('USE EFFECT');
+        const userId = storageLocal.getString('uid');
+    
+        const solicitationsRef = firestore().collection('solicitations');
+        const donationsRef = firestore().collection('donations');
+    
+        let newMyDonations: ISolicitationItem[] = [];
+        let newDonationRequests: ISolicitationItem[] = [];
+    
+        solicitationsRef.where('donatorId', '==', userId).get().then((querySnapshot) => {
+            querySnapshot.forEach((solicitation) => {
 
-            const userId = storageLocal.getString('uid');
-       
-            const solicitationsRef = firestore().collection('solicitations');
-            const donationsRef = firestore().collection('donations');
+                console.log('SOLIC', solicitation.data());
+                
 
-            // console.log('CHAMANDO ');
-            
-            solicitationsRef.where('donatorId', '==', userId).get().then((querySnapshot) => {
-
-                // console.log('doador', querySnapshot);
-
-                querySnapshot.forEach((solicitation) => {
-
-                    const solicitationData = solicitation.data() as ISolicitation;    
-                    
-                    // console.log('SOLICITATION OB: ', solicitationData);
-                    
-
-                    donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
- 
-                        if (donationDoc.exists) {
-
-                            const donation = donationDoc.data() as IDonation;
-                            
-                            const solicitationItem: ISolicitationItem = {
-                                id: donationDoc.id,
-                                image: donation.image,
-                                title: donation.itemName,
-                                status: getStatus(solicitationData).toUpperCase()
-                            }
-
-                            setMyDonations([...myDonations,solicitationItem]);
+                const solicitationData = solicitation.data() as ISolicitation;
+                donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
+                    if (donationDoc.exists) {
+                        const donation = donationDoc.data() as IDonation;
+                        const solicitationItem: ISolicitationItem = {
+                            id: solicitation.id,
+                            image: donation.image,
+                            title: donation.itemName,
+                            status: getStatus(solicitationData).toUpperCase()
                         }
-                    });
+                        newMyDonations.push(solicitationItem);
+                        setMyDonations(newMyDonations); // Atualiza o estado aqui
+                    }
                 });
             });
-
-            solicitationsRef.where('receiverId', '==', userId).get().then((querySnapshot) => {
-
-                const requests: ISolicitationItem[] = [];
-
-                // console.log('doador 1', querySnapshot);
-
-                querySnapshot.forEach((solicitation) => {
-
-                    const solicitationData = solicitation.data() as ISolicitation;
-
-                    // console.log('doador 2', solicitation);
-
-                    donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
-
-                        // console.log('doador 3', donationDoc);
-
-                        if (donationDoc.exists) {
-
-                            const donation = donationDoc.data() as IDonation;
-
-                            // console.log('doador 4', donation);
-                            
-                            const solicitationItem: ISolicitationItem = {
-                                image: donation.image,
-                                title: donation.itemName,
-                                status: getStatus(solicitationData).toUpperCase(),
-                                id: donationDoc.id
-                            }
-
-                            setDonationRequests([...donationRequests,solicitationItem]);
+        });
+    
+        solicitationsRef.where('receiverId', '==', userId).get().then((querySnapshot) => {
+            querySnapshot.forEach((solicitation) => {
+                const solicitationData = solicitation.data() as ISolicitation;
+                donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
+                    if (donationDoc.exists) {
+                        const donation = donationDoc.data() as IDonation;
+                        const solicitationItem: ISolicitationItem = {
+                            image: donation.image,
+                            title: donation.itemName,
+                            status: getStatus(solicitationData).toUpperCase(),
+                            id: solicitation.id
                         }
-                    });
+                        newDonationRequests.push(solicitationItem);
+                        setDonationRequests(newDonationRequests); // Atualiza o estado aqui
+                    }
                 });
             });
-        
-    }, []);
+        });
+    }, [isFocused]);
 
     return (
         <ScrollView style={styles.container}>
