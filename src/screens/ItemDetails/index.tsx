@@ -1,25 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import * as S from './styles';
-import { CaretLeft } from 'phosphor-react-native';
+import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-import { IParamsItem } from './types'
-import { Marker, Callout } from 'react-native-maps';
+import { CaretLeft } from 'phosphor-react-native';
+import React, { useEffect, useState } from 'react';
+import MapView, { Marker, Callout } from 'react-native-maps';
+import styled from 'styled-components/native';
+import { storageLocal } from '../../../App';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
-import firestore from '@react-native-firebase/firestore';
-import { IDonation } from '../ItemMap/types';
-import { storageLocal } from '../../../App';
 
+interface IParamsItem {
+  item: IDonation;
+}
+interface IDonation {
+  id: string;
+  itemName: string;
+  itemCategory: string;
+  local: string;
+  address: {
+    lat: number;
+    lng: number;
+  };
+  description: string;
+  image: string;
+  usageTime: string;
+}
 
-
-const ItemDetails = ({ route }) => {
-
+const ItemDetails = ({ route }: any) => {
   const { item }: IParamsItem = route.params;
-  const [showMap, setShowMap] = useState(false)
-  const [mapReady, setMapReady] = useState(false)
-  const [solicitado, setSolicitado] = useState(false)
+  const [showMap, setShowMap] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [solicitado, setSolicitado] = useState(false);
 
-  const navigation = useNavigation()
+  const navigation = useNavigation();
 
   const goBack = () => {
     navigation.goBack();
@@ -27,19 +39,19 @@ const ItemDetails = ({ route }) => {
 
   useEffect(() => {
     async function fetchData() {
-        const solicitacaoFeita = await firestore()
-            .collection('solicitations')
-            .where('donationId', '==', item.id)
-            .where('receiverId', '==', storageLocal.getString('uid'))
-            .get();
-        
-        if(!!solicitacaoFeita.docs?.length){
-          setSolicitado(true)
-        }
+      const solicitacaoFeita = await firestore()
+        .collection('solicitations')
+        .where('donationId', '==', item.id)
+        .where('receiverId', '==', storageLocal.getString('uid'))
+        .get();
+
+      if (solicitacaoFeita.docs?.length) {
+        setSolicitado(true);
+      }
     }
 
     fetchData();
-}, [/* dependencies */]);
+  }, []);
 
   const handleSolicitar = async (item: IDonation) => {
     const solicitacao = {
@@ -48,26 +60,23 @@ const ItemDetails = ({ route }) => {
       receiverId: storageLocal.getString('uid'),
       accepted: false,
       rejected: false,
-      delivered: false
-    }
+      delivered: false,
+    };
 
     console.log('SOLI ', solicitacao);
-    
 
     try {
-      await firestore()
-        .collection('solicitations')
-        .add(solicitacao);
-      setSolicitado(true)
-      useToast({ message: "Solicitação realizada", type: TOASTTYPE.SUCCESS });
+      await firestore().collection('solicitations').add(solicitacao);
+      setSolicitado(true);
+      useToast({ message: 'Solicitação realizada', type: TOASTTYPE.SUCCESS });
     } catch (error) {
-      console.error("Erro ao adicionar doação:", error);
-      useToast({ message: "Tente Novamente", type: TOASTTYPE.ERROR });
+      console.error('Erro ao adicionar doação:', error);
+      useToast({ message: 'Tente Novamente', type: TOASTTYPE.ERROR });
     }
-  }
+  };
 
   const handleToggle = () => {
-    setShowMap(prevState => !prevState);
+    setShowMap((prevState) => !prevState);
   };
 
   const mapRegion = {
@@ -78,59 +87,177 @@ const ItemDetails = ({ route }) => {
   };
 
   return (
-    <S.Screen>
-      <S.Header>
-        <S.GoBackButton onPress={() => goBack()} >
+    <Screen>
+      <Header>
+        <GoBackButton onPress={goBack}>
           <CaretLeft color="gray" weight="bold" size={32} />
-        </S.GoBackButton>
-        <S.HeaderText>{item.itemName}</S.HeaderText>
-      </S.Header>
+        </GoBackButton>
+        <HeaderText>{item.itemName}</HeaderText>
+      </Header>
       {!showMap ? (
-        <S.ImagemContainer>
-          <S.ItemImage source={{ uri: item.image }} />
-        </S.ImagemContainer>
-      ) :
-        <S.MapContainer>
-          <S.Map initialRegion={mapRegion} onMapReady={() => setMapReady(true)}>
-            {mapReady &&
+        <ImagemContainer>
+          <ItemImage source={{ uri: item.image }} />
+        </ImagemContainer>
+      ) : (
+        <MapContainer>
+          <Map
+            initialRegion={mapRegion}
+            onMapReady={() => {
+              setMapReady(true);
+            }}
+          >
+            {mapReady && (
               <Marker coordinate={mapRegion}>
-                {/* <S.MarkerImage
-              source={{ uri: item.image }}
-              /> */}
+                <MarkerImage source={{ uri: item.image }} />
                 <Callout>
-                  <S.CalloutTitle>{item.itemName}</S.CalloutTitle>
+                  <CalloutTitle>{item.itemName}</CalloutTitle>
                 </Callout>
               </Marker>
-            }
-          </S.Map>
-        </S.MapContainer>
-      }
-      <S.CardTextContainer>
-        <S.NameText>
-          <S.BoldText>Descrição:</S.BoldText> {item.description}
-        </S.NameText>
-        <S.NameText>
-          <S.BoldText>Categoria:</S.BoldText> {item.itemCategory}
-        </S.NameText>
-        <S.NameText>
-          <S.BoldText>Tempo de uso:</S.BoldText> {item.usageTime}
-        </S.NameText>
-        <S.NameText>
-          <S.BoldText>Endereço:</S.BoldText> {item.local}
-        </S.NameText>
-        <S.ShowMapButton onPress={handleToggle}>
-          <S.NameText>
-            Ver localização no mapa
-          </S.NameText>
-        </S.ShowMapButton>
-        {
-          !solicitado ? (<S.ButtonSolicitar title="Solicitar" onPress={()=> handleSolicitar(item)} />) : (<S.NameText>
-            Doação solicitada, aguardando confirmação.
-          </S.NameText>)
-        }
-      </S.CardTextContainer>
-    </S.Screen>
+            )}
+          </Map>
+        </MapContainer>
+      )}
+      <CardTextContainer>
+        <NameText>
+          <BoldText>Descrição:</BoldText> {item.description}
+        </NameText>
+        <NameText>
+          <BoldText>Categoria:</BoldText> {item.itemCategory}
+        </NameText>
+        <NameText>
+          <BoldText>Tempo de uso:</BoldText> {item.usageTime}
+        </NameText>
+        <NameText>
+          <BoldText>Endereço:</BoldText> {item.local}
+        </NameText>
+      </CardTextContainer>
+      <ShowMapButton onPress={handleToggle}>
+        <ShowMapText>
+          {!showMap ? 'Ver localização no mapa' : 'Ver Imagem Do Item'}
+        </ShowMapText>
+      </ShowMapButton>
+      {!solicitado ? (
+        <RequestButton
+          onPress={async () => {
+            await handleSolicitar(item);
+          }}
+        >
+          <RequestText>Solicitar doação</RequestText>
+        </RequestButton>
+      ) : (
+        <RequestConfirmText>Doação solicitada</RequestConfirmText>
+      )}
+    </Screen>
   );
 };
 
 export default ItemDetails;
+
+const Screen = styled.View`
+  flex: 1;
+`;
+
+const Header = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+const GoBackButton = styled.TouchableOpacity`
+  position: absolute;
+  left: 2%;
+`;
+
+const HeaderText = styled.Text`
+  font-size: 24px;
+  font-weight: bold;
+`;
+
+const ImagemContainer = styled.View`
+  align-items: center;
+  justify-content: center;
+  margin-top: 25px;
+`;
+
+const ItemImage = styled.Image`
+  width: 300px;
+  height: 300px;
+`;
+
+const CardTextContainer = styled.View`
+  background-color: #d9cdcd;
+  border-radius: 20px;
+  padding: 20px;
+  margin-top: 20px;
+`;
+
+const BoldText = styled.Text`
+  font-weight: bold;
+`;
+
+const NameText = styled.Text`
+  font-size: 24px;
+`;
+
+const Map = styled(MapView)`
+  flex: 1;
+`;
+
+const MarkerImage = styled.Image`
+  width: 50px;
+  height: 50px;
+`;
+
+const CalloutTitle = styled.Text`
+  font-size: 16px;
+`;
+
+const MapContainer = styled.View`
+  flex: 1;
+  margin: 20px;
+`;
+
+const ShowMapButton = styled.TouchableOpacity`
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 20px;
+`;
+
+const ShowMapText = styled.Text`
+  font-size: 24px;
+  color: white;
+  background-color: coral;
+  border-radius: 10px;
+  text-align: center;
+  padding: 10px;
+  width: 70%;
+`;
+
+const RequestButton = styled.TouchableOpacity`
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+const RequestText = styled.Text`
+  font-size: 24px;
+  color: white;
+  background-color: coral;
+  border-radius: 10px;
+  text-align: center;
+  padding: 10px;
+  width: 70%;
+`;
+
+const RequestConfirmText = styled.Text`
+  align-self: center;
+  font-size: 24px;
+  color: black;
+  background-color: #e2e0df;
+  border-radius: 10px;
+  text-align: center;
+  padding: 10px;
+  width: 70%;
+`;

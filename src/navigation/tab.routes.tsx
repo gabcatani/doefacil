@@ -1,24 +1,34 @@
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  Heart,
+  Cube,
+  Article,
+  MapTrifold,
+  StarFour,
+} from 'phosphor-react-native';
 import React from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Heart, Cube, Article, MapTrifold, StarFour} from 'phosphor-react-native';
-import Home from '../screens/Infomations';
 import Avaliation from '../screens/Avaliation';
-import Mural from '../screens/Mural';
-import ItemsList from '../screens/ItemsList';
 import Donation from '../screens/Donation';
+import Home from '../screens/Infomations';
+import ItemsList from '../screens/ItemsList';
 import Solicitation from '../screens/Solicitation';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabRoutes() {
   return (
-    <Tab.Navigator screenOptions={{headerShown: false}} initialRouteName="Maps" >
+    <Tab.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName="Informations"
+    >
       <Tab.Screen
         name="Informations"
         component={Home}
         options={{
           tabBarLabel: 'Informações',
-          tabBarIcon: ({color, size}) => <Cube color="teal" weight="duotone" />,
+          tabBarIcon: ({ color, size }) => (
+            <Cube color="teal" weight="duotone" />
+          ),
         }}
       />
       <Tab.Screen
@@ -26,7 +36,7 @@ export default function TabRoutes() {
         component={Donation}
         options={{
           tabBarLabel: 'Doar',
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Heart color="teal" weight="duotone" size={32} />
           ),
         }}
@@ -36,17 +46,17 @@ export default function TabRoutes() {
         component={ItemsList}
         options={{
           tabBarLabel: 'Mapa',
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <MapTrifold color="teal" weight="duotone" size={32} />
           ),
         }}
       />
       <Tab.Screen
-        name="Feed"
-        component={Mural}
+        name="Solicitation"
+        component={Solicitation}
         options={{
           tabBarLabel: 'Solicitações',
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Article color="teal" weight="duotone" size={32} />
           ),
         }}
@@ -56,17 +66,7 @@ export default function TabRoutes() {
         component={Avaliation}
         options={{
           tabBarLabel: 'Avalie',
-          tabBarIcon: ({color, size}) => (
-            <StarFour color="teal" weight="duotone" size={32} />
-          ),
-        }}
-      />
-       <Tab.Screen
-        name="Solicitação"
-        component={Solicitation}
-        options={{
-          tabBarLabel: 'Solicitação',
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <StarFour color="teal" weight="duotone" size={32} />
           ),
         }}

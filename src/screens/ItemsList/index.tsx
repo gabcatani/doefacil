@@ -1,36 +1,57 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, TouchableOpacity, ActivityIndicator, View } from 'react-native';
-import * as S from './styles';
-import firestore from '@react-native-firebase/firestore';
-import { IDonation } from './types';
-import { useNavigation } from '@react-navigation/native';
-import { Marker, Callout } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
+import firestore from '@react-native-firebase/firestore';
+import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  View,
+} from 'react-native';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import { MMKV } from 'react-native-mmkv';
+import styled from 'styled-components/native';
 
-type Region = {
+interface Region {
   latitude: number;
   longitude: number;
   latitudeDelta: number;
   longitudeDelta: number;
-};
+}
+
+interface IDonation {
+  id: string;
+  itemName: string;
+  itemCategory: string;
+  local: string;
+  address: {
+    lat: number;
+    lng: number;
+  };
+  description: string;
+  image: string;
+  usageTime: string;
+}
 
 const ItemsList = () => {
-  const [donations, setDonations] = useState<IDonation[] | null>(null)
-  const [showMap, setShowMap] = useState(false)
-  const [mapReady, setMapReady] = useState(false)
+  const [donations, setDonations] = useState<IDonation[] | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
 
   const storage = new MMKV();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const handleToggle = () => {
-    setShowMap(prevState => !prevState);
+    setShowMap((prevState) => !prevState);
   };
 
-  const handleItemPress = useCallback((item: IDonation) => {
-    navigation.navigate('ItemDetails', { item });
-  }, [navigation]);
+  const handleItemPress = useCallback(
+    (item: IDonation) => {
+      navigation.navigate('ItemDetails', { item });
+    },
+    [navigation],
+  );
 
   useEffect(() => {
     Geolocation.getCurrentPosition(
@@ -50,22 +71,21 @@ const ItemsList = () => {
       (error) => {
         console.error(error);
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
     );
   }, []);
-
 
   useEffect(() => {
     const fetchDonations = async () => {
       try {
         const querySnapshot = await firestore().collection('donations').get();
-        const data = querySnapshot.docs.map(doc => ({
+        const data = querySnapshot.docs.map((doc) => ({
           ...doc.data(),
-          id: doc.id
-        })) as IDonation[]
+          id: doc.id,
+        })) as IDonation[];
         setDonations(data);
       } catch (error) {
-        console.error("Erro ao buscar doações: ", error);
+        console.error('Erro ao buscar doações: ', error);
       }
     };
     fetchDonations();
@@ -73,19 +93,23 @@ const ItemsList = () => {
 
   const renderItem = useCallback(
     ({ item, index }: { item: IDonation; index: number }) => (
-      <TouchableOpacity onPress={() => handleItemPress(item)}>
-        <S.Card key={index}>
-          <S.ImagemContainer>
-            <S.ItemImage source={{ uri: item.image }} />
-          </S.ImagemContainer>
-          <S.CardTextContainer>
-            <S.NameText>{item.itemName}</S.NameText>
-            {/* <S.CategoryText numberOfLines={1} ellipsizeMode="tail">Está a {calcularDistancia(item)} de você</S.CategoryText> */}
-          </S.CardTextContainer>
-        </S.Card>
+      <TouchableOpacity
+        onPress={() => {
+          handleItemPress(item);
+        }}
+      >
+        <Card key={index}>
+          <ImagemContainer>
+            <ItemImage source={{ uri: item.image }} />
+          </ImagemContainer>
+          <CardTextContainer>
+            <NameText>{item.itemName}</NameText>
+            {/* <CategoryText numberOfLines={1} ellipsizeMode="tail">Está a {calcularDistancia(item)} de você</CategoryText> */}
+          </CardTextContainer>
+        </Card>
       </TouchableOpacity>
     ),
-    [currentRegion]
+    [currentRegion],
   );
 
   const renderDonationMarker = (item: IDonation) => (
@@ -95,54 +119,168 @@ const ItemsList = () => {
       anchor={{ x: 0.5, y: 1 }}
     >
       <View>
-        <S.MarkerImage source={{ uri: item.image }} />
-        <S.PinShaft />
+        <MarkerImage source={{ uri: item.image }} />
+        <PinShaft />
       </View>
       <Callout>
-        <S.CalloutTitle>{item.itemName}</S.CalloutTitle>
+        <CalloutTitle>{item.itemName}</CalloutTitle>
       </Callout>
     </Marker>
   );
 
   return (
-    <S.Screen>
-      <S.Header>
-        <S.HeaderText>Doações Disponíveis</S.HeaderText>
-      </S.Header>
-      <S.ToggleButton onPress={handleToggle}>
-        <S.ToggleText>Lista</S.ToggleText>
-        <S.ToggleText>Mapa</S.ToggleText>
-      </S.ToggleButton>
+    <Screen>
+      <Header>
+        <HeaderText>Doações Disponíveis</HeaderText>
+      </Header>
+      <ToggleButton onPress={handleToggle}>
+        <ToggleText>Lista</ToggleText>
+        <ToggleText>Mapa</ToggleText>
+      </ToggleButton>
       {!showMap ? (
         donations ? (
           <FlatList
             data={donations}
             renderItem={renderItem}
-            keyExtractor={item => item.id.toString()}
+            keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
           />
         ) : (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActiveIndicatorContainer>
             <ActivityIndicator size="large" color="#0000ff" />
-          </View>
+          </ActiveIndicatorContainer>
         )
       ) : (
-        <S.MapContainer>
-          <S.Map
+        <MapContainer>
+          <Map
             initialRegion={{
               latitude: currentRegion?.latitude ?? 0,
               longitude: currentRegion?.longitude ?? 0,
               latitudeDelta: 0.0922,
               longitudeDelta: 0.0421,
             }}
-            onMapReady={() => setMapReady(true)}
+            onMapReady={() => {
+              setMapReady(true);
+            }}
           >
             {mapReady && donations?.map(renderDonationMarker)}
-          </S.Map>
-        </S.MapContainer>
+          </Map>
+        </MapContainer>
       )}
-    </S.Screen>
+    </Screen>
   );
 };
 
 export default ItemsList;
+
+const Screen = styled.View`
+  flex: 1;
+`;
+
+// const BackgroundContainer = styled.View`
+//   /* background-color: blue; */
+// `;
+
+const ActiveIndicatorContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Header = styled.View`
+  padding-top: 20px;
+  margin-bottom: 10px;
+  align-items: center;
+`;
+
+const HeaderText = styled.Text`
+  font-size: 24px;
+  font-weight: bold;
+`;
+
+const Card = styled.View`
+  flex-direction: row;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 30px;
+  background-color: white;
+`;
+
+const CardTextContainer = styled.View`
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10px;
+  margin-left: 10px;
+`;
+
+const ImagemContainer = styled.View`
+  align-items: center;
+  justify-content: center;
+`;
+
+const ItemImage = styled.Image`
+  width: 100px;
+  height: 100px;
+  border-radius: 99px;
+`;
+
+const NameText = styled.Text`
+  font-size: 24px;
+  textalign: left;
+`;
+
+const CategoryText = styled.Text`
+  font-size: 16px;
+  textalign: left;
+`;
+
+const Toggle = styled.View`
+  /* flex: 1; */
+  flex-direction: row;
+  justify-content: center;
+`;
+
+const ToggleButton = styled.TouchableOpacity`
+  flex-direction: row;
+  justify-content: center;
+`;
+
+const ToggleText = styled.Text`
+  font-size: 16px;
+  margin: 10px;
+`;
+const Map = styled(MapView)`
+  flex: 1;
+`;
+
+const MarkerImage = styled.Image`
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  background-color: transparent;
+  border: 2px solid white;
+`;
+
+const PinShaft = styled(View)`
+  width: 0;
+  height: 0;
+  borderleftwidth: 10px;
+  borderrightwidth: 10px;
+  borderbottomwidth: 20px;
+  borderstyle: solid;
+  backgroundcolor: transparent;
+  borderleftcolor: transparent;
+  borderrightcolor: transparent;
+  borderbottomcolor: black;
+  alignself: center;
+  transform: rotate(180deg);
+`;
+
+const CalloutTitle = styled.Text`
+  font-size: 16px;
+`;
+
+const MapContainer = styled.View`
+  flex: 1;
+  margin: 20px;
+`;

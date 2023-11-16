@@ -1,54 +1,63 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import LottieView from 'lottie-react-native';
 
 const donationOptions = [
   {
     title: 'Cadastre a localização',
-    description: 'Defina o local onde a doação será coletada. Use nosso mapa interativo para marcar exatamente onde você estará. Isso ajuda os doadores a encontrarem o ponto de coleta mais conveniente para eles.',
+    description:
+      'Defina o local onde a doação será coletada. Use nosso mapa interativo para marcar exatamente onde você estará. Isso ajuda os doadores a encontrarem o ponto de coleta mais conveniente para eles.',
     action: 'More >>',
     lottieFile: require('../../../assets/animations/location.json'), // Substitua pelo caminho correto
   },
   {
     title: 'Escreva a descrição',
-    description: 'Descreva o item que você está doando com detalhes. Inclua informações como condição do item, tamanho, cor e qualquer outro detalhe relevante que ajudará os doadores a entenderem o que você está oferecendo.',
+    description:
+      'Descreva o item que você está doando com detalhes. Inclua informações como condição do item, tamanho, cor e qualquer outro detalhe relevante que ajudará os doadores a entenderem o que você está oferecendo.',
     action: 'More >>',
     lottieFile: require('../../../assets/animations/coments.json'), // Substitua pelo caminho correto
   },
   {
     title: 'Busque sua doação',
-    description: 'Após a doação ser oferecida, organize como ela será entregue. Você pode optar por entregar em pessoa ou usar serviços de transporte parceiros para facilitar o processo de doação.',
+    description:
+      'Após a doação ser oferecida, organize como ela será entregue. Você pode optar por entregar em pessoa ou usar serviços de transporte parceiros para facilitar o processo de doação.',
     action: 'More >>',
     lottieFile: require('../../../assets/animations/transport.json'), // Substitua pelo caminho correto
-  }
+  },
 ];
 
-
-const DonationScreen = () => {
-
+const DonationScreen = (): any => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const handleScroll = (event: any) => {
+  const handleScroll = (event: any): any => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const viewWidth = event.nativeEvent.layoutMeasurement.width;
     const newIndex = Math.floor(contentOffsetX / viewWidth);
     setActiveIndex(newIndex);
   };
 
-  const renderPagination = () => {
+  const renderPagination = (): any => {
     return (
       <View style={styles.paginationWrapper}>
         {donationOptions.map((_, index) => (
           <View
             key={index}
-            style={[styles.paginationDot, activeIndex === index ? styles.paginationDotActive : null]}
+            style={[
+              styles.paginationDot,
+              activeIndex === index ? styles.paginationDotActive : null,
+            ]}
           />
         ))}
       </View>
     );
   };
-
-
 
   return (
     <View style={{ flex: 1 }}>
