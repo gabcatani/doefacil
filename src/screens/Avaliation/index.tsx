@@ -1,35 +1,53 @@
-import React, { useState } from 'react';
-import { ScrollView, TextInput } from 'react-native';
-import styled from 'styled-components/native';
-import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { ScrollView } from 'react-native';
+import styled from 'styled-components/native';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
-import firestore from '@react-native-firebase/firestore';
 
 const questions = [
   {
     question: 'Como você avaliaria a facilidade de uso do aplicativo?',
-    options: ['Muito fácil de usar', 'Relativamente fácil, com alguns desafios', 'Difícil de usar', 'Muito difícil de usar'],
+    options: [
+      'Muito fácil de usar',
+      'Relativamente fácil, com alguns desafios',
+      'Difícil de usar',
+      'Muito difícil de usar',
+    ],
   },
   {
-    question: 'Quão satisfeito(a) você está com as funcionalidades oferecidas pelo aplicativo?',
-    options: ['Muito satisfeito(a)', 'Satisfeito(a), mas há espaço para melhorias', 'Insatisfeito(a)', 'Muito insatisfeito(a)'],
+    question:
+      'Quão satisfeito(a) você está com as funcionalidades oferecidas pelo aplicativo?',
+    options: [
+      'Muito satisfeito(a)',
+      'Satisfeito(a), mas há espaço para melhorias',
+      'Insatisfeito(a)',
+      'Muito insatisfeito(a)',
+    ],
   },
   {
-    question: 'Como você classificaria a estabilidade e desempenho do aplicativo?',
-    options: ['Excelente, sem problemas de desempenho', 'Bom, com pequenos problemas ocasionais', 'Regular, com problemas frequentes', 'Ruim, com problemas constantes'],
+    question:
+      'Como você classificaria a estabilidade e desempenho do aplicativo?',
+    options: [
+      'Excelente, sem problemas de desempenho',
+      'Bom, com pequenos problemas ocasionais',
+      'Regular, com problemas frequentes',
+      'Ruim, com problemas constantes',
+    ],
   },
   {
-    question: 'Descreva quais recursos adicionais você gostaria de ver no aplicativo e como eles melhorariam sua experiência de uso.',
+    question:
+      'Descreva quais recursos adicionais você gostaria de ver no aplicativo e como eles melhorariam sua experiência de uso.',
     input: true,
   },
   {
-    question: 'Compartilhe qualquer experiência específica (positiva ou negativa) que você teve ao usar o aplicativo e como isso afetou sua percepção geral sobre ele.',
+    question:
+      'Compartilhe qualquer experiência específica (positiva ou negativa) que você teve ao usar o aplicativo e como isso afetou sua percepção geral sobre ele.',
     input: true,
-  }
+  },
 ];
-
 
 const Avaliation = () => {
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
@@ -50,57 +68,62 @@ const Avaliation = () => {
     const allOptionsSelected = answers.every((answer, index) => {
       return questions[index].options ? answer !== null : true;
     });
-  
+
     const allInputsFilled = questions.every((question, index) => {
-      return question.input ? inputAnswers[index] && inputAnswers[index].trim() !== '' : true;
+      return question.input
+        ? inputAnswers[index] && inputAnswers[index].trim() !== ''
+        : true;
     });
-  
+
     if (!allOptionsSelected || !allInputsFilled) {
-      useToast({ message: 'Por favor, responda todas as perguntas.', type: TOASTTYPE.ERROR });
+      useToast({
+        message: 'Por favor, responda todas as perguntas.',
+        type: TOASTTYPE.ERROR,
+      });
       return;
     }
-  
+
     const allAnswers = answers.map((answer, index) => {
       if (questions[index].options) {
         return questions[index].options[answer];
       }
       return inputAnswers[index];
     });
-  
-    console.log(allAnswers);
-    navigation.navigate('AvaliationReturn')
+
+    navigation.navigate('AvaliationReturn');
     useToast({ message: 'Respostas enviadas!', type: TOASTTYPE.SUCCESS });
     try {
-      // Supondo que 'auth().currentUser.uid' seja o ID do usuário autenticado atualmente
       const userEmail = auth().currentUser?.email;
-  
-      await firestore()
-        .collection('avaliations')
-        .add({
-          email: userEmail,
-          answers: allAnswers,
-          timestamp: firestore.FieldValue.serverTimestamp() // Para adicionar um timestamp do servidor
-        });
-  
+
+      await firestore().collection('avaliations').add({
+        email: userEmail,
+        answers: allAnswers,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+      });
+
       navigation.navigate('AvaliationReturn');
       useToast({ message: 'Respostas enviadas!', type: TOASTTYPE.SUCCESS });
       setAnswers(Array(questions.length).fill(null));
       setInputAnswers({});
     } catch (error) {
-      console.error("Erro ao salvar respostas:", error);
-      useToast({ message: "Tente novamente", type: TOASTTYPE.ERROR });
+      console.error('Erro ao salvar respostas:', error);
+      useToast({ message: 'Tente novamente', type: TOASTTYPE.ERROR });
     }
   };
-  
-  
 
-  const handleSignOut = () => {
-    auth()
-      .signOut()
-      .then(() => navigation.navigate('Login'))
-      .then(() => useToast({ message: 'Você saiu do app', type: TOASTTYPE.SUCCESS }))
-      .catch(() => useToast({ message: 'Tente novamente', type: TOASTTYPE.ERROR }));
-  };
+  // const handleSignOut = () => {
+  //   auth()
+  //     .signOut()
+  //     .then(() => {
+  //       navigation.navigate('Login');
+  //     })
+  //     .then(() => {
+  //       useToast({ message: 'Você saiu do app', type: TOASTTYPE.SUCCESS });
+  //     })
+  //     .catch(() => {
+  //       useToast({ message: 'Tente novamente', type: TOASTTYPE.ERROR });
+  //     });
+  // };
 
   return (
     <Screen>
@@ -114,7 +137,9 @@ const Avaliation = () => {
                 <OptionButton
                   key={optionIndex}
                   selected={answers[questionIndex] === optionIndex}
-                  onPress={() => handleSelectOption(questionIndex, optionIndex)}
+                  onPress={() => {
+                    handleSelectOption(questionIndex, optionIndex);
+                  }}
                 >
                   <OptionText>{option}</OptionText>
                 </OptionButton>
@@ -122,13 +147,15 @@ const Avaliation = () => {
             ) : (
               <StyledTextInput
                 value={inputAnswers[questionIndex] || ''}
-                onChangeText={(text) => handleInputChange(questionIndex, text)}
+                onChangeText={(text) => {
+                  handleInputChange(questionIndex, text);
+                }}
                 placeholder="Digite sua resposta aqui"
               />
             )}
           </QuestionContainer>
         ))}
-        <ButtonSubmit title='Enviar Respostas' onPress={handleSubmit} />
+        <ButtonSubmit title="Enviar Respostas" onPress={handleSubmit} />
         {/* <ButtonSubmit title='Sair' onPress={handleSignOut} /> */}
       </ScrollView>
     </Screen>
@@ -161,7 +188,7 @@ const QuestionText = styled.Text`
 `;
 
 const OptionButton = styled.TouchableOpacity`
-  background-color: ${props => (props.selected ? 'blue' : 'gray')};
+  background-color: ${(props) => (props.selected ? 'blue' : 'gray')};
   padding: 10px;
   margin-bottom: 5px;
   border-radius: 5px;
@@ -184,11 +211,4 @@ const StyledTextInput = styled.TextInput`
   padding: 8px;
   border-radius: 5px;
   text-align-vertical: top;
-`;
-
-const SubmitText = styled.Text`
-  color: white;
-  font-size: 16px;
-  text-align: center;
-  margin-bottom: 15px;
 `;
