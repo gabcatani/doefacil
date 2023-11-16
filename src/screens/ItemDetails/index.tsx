@@ -2,6 +2,7 @@ import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { CaretLeft } from 'phosphor-react-native';
 import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
@@ -30,6 +31,7 @@ const ItemDetails = ({ route }: any) => {
   const [showMap, setShowMap] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [solicitado, setSolicitado] = useState(false);
+  const [isMyDonation, setIsMyDonation] = useState(true);
 
   const navigation = useNavigation();
 
@@ -38,6 +40,8 @@ const ItemDetails = ({ route }: any) => {
   };
 
   useEffect(() => {
+    setIsMyDonation(item.donatorId == storageLocal.getString('uid'));
+
     async function fetchData() {
       const solicitacaoFeita = await firestore()
         .collection('solicitations')
@@ -51,7 +55,18 @@ const ItemDetails = ({ route }: any) => {
     }
 
     fetchData();
-  }, []);
+  }, [item.donatorId, item.id]);
+
+  const handleDelete = async (item: IDonation) => {
+    firestore().collection('donations').doc(item.id).delete();
+
+    useToast({
+      message: 'Anúncio removido com sucesso!',
+      type: TOASTTYPE.SUCCESS,
+    });
+
+    navigation.navigate('Maps');
+  };
 
   const handleSolicitar = async (item: IDonation) => {
     const solicitacao = {
@@ -130,23 +145,37 @@ const ItemDetails = ({ route }: any) => {
         <NameText>
           <BoldText>Endereço:</BoldText> {item.local}
         </NameText>
+
+        <ShowMapButton onPress={handleToggle}>
+          <NameText>
+            {!showMap ? 'Ver localização no mapa' : 'Ver Imagem Do Item'}
+          </NameText>
+        </ShowMapButton>
+
+        {!isMyDonation && (
+          <View>
+            {!solicitado ? (
+              <ButtonSolicitar
+                title="Solicitar"
+                onPress={async () => {
+                  await handleSolicitar(item);
+                }}
+              />
+            ) : (
+              <NameText>Doação solicitada, aguardando confirmação.</NameText>
+            )}
+          </View>
+        )}
+
+        {isMyDonation && (
+          <ButtonDelete
+            title="Deletar anúncio"
+            onPress={async () => {
+              await handleDelete(item);
+            }}
+          />
+        )}
       </CardTextContainer>
-      <ShowMapButton onPress={handleToggle}>
-        <ShowMapText>
-          {!showMap ? 'Ver localização no mapa' : 'Ver Imagem Do Item'}
-        </ShowMapText>
-      </ShowMapButton>
-      {!solicitado ? (
-        <RequestButton
-          onPress={async () => {
-            await handleSolicitar(item);
-          }}
-        >
-          <RequestText>Solicitar doação</RequestText>
-        </RequestButton>
-      ) : (
-        <RequestConfirmText>Doação solicitada</RequestConfirmText>
-      )}
     </Screen>
   );
 };
@@ -260,4 +289,13 @@ const RequestConfirmText = styled.Text`
   text-align: center;
   padding: 10px;
   width: 70%;
+`;
+
+const ButtonDelete = styled.Button`
+  background-color: red;
+  padding: 15px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  width: 100%;
 `;

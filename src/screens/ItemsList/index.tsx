@@ -1,6 +1,6 @@
 import Geolocation from '@react-native-community/geolocation';
 import firestore from '@react-native-firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
@@ -11,7 +11,6 @@ import {
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { MMKV } from 'react-native-mmkv';
 import styled from 'styled-components/native';
-
 interface Region {
   latitude: number;
   longitude: number;
@@ -38,6 +37,8 @@ const ItemsList = () => {
   const [showMap, setShowMap] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+
+  const isFocused = useIsFocused();
 
   const storage = new MMKV();
   const navigation = useNavigation<any>();
@@ -84,12 +85,38 @@ const ItemsList = () => {
           id: doc.id,
         })) as IDonation[];
         setDonations(data);
+        const donationsPromises = querySnapshot.docs.map(async (doc) => {
+          const solicitations = await firestore()
+            .collection('solicitations')
+            .where('donationId', '==', doc.id)
+            .where('accepted', '==', true)
+            .get();
+
+          if (doc.data()?.itemName == 'Fogao') {
+            console.log(doc.id);
+
+            console.log('SOLI2', solicitations.docs);
+          }
+
+          if (solicitations.docs.length === 0) {
+            return { ...doc.data(), id: doc.id };
+          }
+          return null;
+        });
+
+        const filteredDonations = (await Promise.all(donationsPromises)).filter(
+          (doc) => doc !== null,
+        ) as IDonation[];
+
+        // console.log('DONATIONS', filteredDonations);
+
+        setDonations(filteredDonations);
       } catch (error) {
         console.error('Erro ao buscar doações: ', error);
       }
     };
     fetchDonations();
-  }, []);
+  }, [isFocused]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: IDonation; index: number }) => (

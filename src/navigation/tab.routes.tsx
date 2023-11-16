@@ -8,10 +8,10 @@ import {
 } from 'phosphor-react-native';
 import React from 'react';
 import Avaliation from '../screens/Avaliation';
+import ItemsList from '../screens/ItemsList';
 import Donation from '../screens/Donation';
 import Home from '../screens/Infomations';
-import ItemsList from '../screens/ItemsList';
-import Solicitation from '../screens/Solicitation';
+import Solicitations from '../screens/Solicitations';
 
 const Tab = createBottomTabNavigator();
 
@@ -52,8 +52,8 @@ export default function TabRoutes() {
         }}
       />
       <Tab.Screen
-        name="Solicitation"
-        component={Solicitation}
+        name="Solicitations"
+        component={Solicitations}
         options={{
           tabBarLabel: 'Solicitações',
           tabBarIcon: ({ color, size }) => (
