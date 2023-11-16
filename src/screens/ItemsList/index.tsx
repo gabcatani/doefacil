@@ -66,7 +66,7 @@ const ItemsList = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c; 
 
-    return distance.toFixed(0);
+    return Number(distance.toFixed(0));
   };
 
   const handleItemPress = useCallback(
@@ -119,7 +119,14 @@ const ItemsList = () => {
           (doc) => doc !== null,
         ) as IDonation[];
 
-        setDonations(filteredDonations);
+      const donationsDistance = filteredDonations.map(donation => ({
+        donation,
+        distance: calcularDistancia(donation)
+      }));
+
+      donationsDistance.sort((a, b) => a.distance - b.distance);
+
+        setDonations(donationsDistance.map(donationDistance => donationDistance.donation));
       } catch (error) {
         console.error('Erro ao buscar doações: ', error);
       }
