@@ -1,32 +1,286 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextStyle } from 'react-native';
-import { storageLocal } from '../../../App';
-import firestore from '@react-native-firebase/firestore';
-import Solicitation, { ISolicitation } from '../Solicitation';
-import { IDonation } from '../ItemMap/types';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, TextInput, Button, ScrollView, Text, StyleSheet, Image } from 'react-native';
+import * as S from './styles';
+import { CaretLeft } from 'phosphor-react-native';
+import firestore from '@react-native-firebase/firestore';
+import { IDonation } from '../ItemMap/types';
+import { storageLocal } from '../../../App';
 
-type ISolicitationItem = {
-    id: string,
-    title: string,
-    status: string,
-    image: string
+const styles = StyleSheet.create({
+    chatContainer: {
+        flex: 1,
+        padding: 10,
+    },
+    itemImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        marginRight: 10,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        padding: 10,
+    },
+    minhaMensagem: {
+        backgroundColor: '#dcf8c6',
+        padding: 10,
+        borderRadius: 5,
+        marginVertical: 5,
+        maxWidth: '70%',
+        alignSelf: 'flex-end',
+    },
+    outraMensagem: {
+        backgroundColor: '#fff',
+        padding: 10,
+        borderRadius: 5,
+        marginVertical: 5,
+        maxWidth: '70%',
+        alignSelf: 'flex-start',
+    },
+    textInput: {
+        flex: 1,
+        borderColor: 'gray',
+        borderWidth: 1,
+        marginRight: 10,
+        borderRadius: 5,
+        padding: 10,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: 'grey',
+    },
+    chatTitle: {
+        fontWeight: 'bold',
+        fontSize: 20,
+        textAlign: 'center',
+        padding: 10,
+    },
+    tituloAnuncio: {
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
+    status: {
+        marginTop: 5,
+        padding: 5,
+        borderRadius: 5,
+        color: 'white',
+    },
+    aceita: {
+        backgroundColor: 'green',
+    },
+    recusada: {
+        backgroundColor: 'red',
+    },
+    pendente: {
+        backgroundColor: 'blue',
+    },
+    messageDate: {
+        fontSize: 10,
+        color: 'gray',
+        alignSelf: 'flex-end',
+        marginHorizontal: 5,
+    },
+});
+
+type Message = {
+    text: string,
+    myText: boolean,
+    date: Date
 }
 
-const Solicitations = () => {
-    const [donationRequests, setDonationRequests] = useState<ISolicitationItem[]>([]);
-    const [myDonations, setMyDonations] = useState<ISolicitationItem[]>([]);
+export type ISolicitation = {
+    id: string,
+    donationId: string,
+    donatorId: string,
+    receiverId: string,
+    accepted: boolean,
+    rejected: boolean,
+    delivered: boolean
+}
 
-    const navigation = useNavigation<any>()
+type IChat = {
+    date: Date,
+    solicitationId: string,
+    uid: string,
+    value: string
+}
 
-    const isFocused = useIsFocused();
+type IParamsSolicitation = {
+    id: string
+}
 
-    const handleItemPress = useCallback((solicitationId: string) => {
+// Componente Chat
+const Solicitation = ({ route }) => {
+    const [messages, setMessages] = useState<Array<Message>>([]);
+    const [text, setText] = useState('');
+    const [status, setStatus] = useState('pendente');
+    const [delivered, setDelivered] = useState(false);
+    const [solicitation, setSolicitation] = useState<ISolicitation>();
+    const [donation, setDonation] = useState<IDonation>();
 
-        navigation.navigate('Solicitation', { id: solicitationId });
-      }, [navigation]);
+    const scrollViewRef = useRef<ScrollView>(null);
+
+    const navigation = useNavigation()
+
+    const { id }: IParamsSolicitation = route.params;
+
+    useEffect(() => {
+
+        async function getSolicitation() {
+            const soliDoc = await firestore().collection('solicitations').doc(id).get();
+
+            const soli = soliDoc.data()! as ISolicitation;
+            soli.id = soliDoc.id;
+
+            setInitialValues(soli);
+
+            setSolicitation(soli);
+        }
+
+        getSolicitation()
+    }, [id])
+
+    const setInitialValues = (soli: ISolicitation) => {
+
+        setDelivered(soli.delivered)
+
+        setStatus(getStatus(soli))
+
+    }
+
+    useEffect(() => {
+        if (scrollViewRef.current) {
+            scrollViewRef.current.scrollToEnd({ animated: true });
+        }
+    }, [messages.length]);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            const messagesSnapshot = await firestore()
+                .collection('chats')
+                .where('solicitationId', '==', solicitation?.id ?? '')
+                .orderBy('date')
+                .get();
+
+            if (!messagesSnapshot) {
+                return;
+            }
+
+            const fetchedMessages = messagesSnapshot.docs.map(doc => {
+                const firebaseData = doc.data();
+                const myText = firebaseData.uid === storageLocal.getString('uid');
+                return {
+                    text: firebaseData.value,
+                    myText: myText,
+                    date: firebaseData.date.toDate() // Convertendo o timestamp do Firebase para um objeto Date
+                };
+            });
+
+            setMessages(fetchedMessages);
+        };
+
+        // Buscar mensagens na montagem do componente
+        fetchMessages();
+
+        // Configurando o intervalo para buscar novas mensagens
+        const interval = setInterval(() => {
+            fetchMessages();
+        }, 3000);
+
+        // Configurando o listener do Firebase
+        const unsubscribe = firestore()
+            .collection('chats')
+            .where('solicitationId', '==', solicitation?.id ?? '')
+            .orderBy('date')
+            .onSnapshot(snapshot => {
+                if (!snapshot) {
+                    return;
+                }
+
+                const updatedMessages = snapshot.docs.map(doc => {
+                    const firebaseData = doc.data();
+                    return {
+                        text: firebaseData.value,
+                        myText: firebaseData.uid === storageLocal.getString('uid'),
+                        date: firebaseData.date.toDate()
+                    };
+                });
+                setMessages(updatedMessages);
+            });
+
+        // Limpando o intervalo e o listener quando o componente for desmontado
+        return () => {
+            clearInterval(interval);
+            unsubscribe();
+        };
+    }, [solicitation]);
+
+    useEffect(() => {
+
+        async function getDonation() {
+
+            if (!solicitation) {
+                return;
+            }
+
+
+            const donation = await firestore()
+                .collection('donations')
+                .doc(solicitation!.donationId)
+                .get();
+
+            setDonation((donation.data() as IDonation))
+        }
+
+        getDonation()
+    }, [solicitation])
+
+    const goBack = () => {
+        navigation.goBack();
+    };
+
+    const sendMessage = () => {
+        if (text && solicitation) {
+
+            const message: IChat = {
+                date: new Date(),
+                solicitationId: solicitation.id,
+                uid: storageLocal.getString('uid')!,
+                value: text
+            }
+
+            firestore().collection('chats').add(message);
+
+            setMessages([...messages, { text, myText: true, date: new Date() }]);
+            setText('');
+        }
+    };
+
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'aceita':
+                return styles.aceita;
+            case 'entregue':
+                return styles.aceita;
+            case 'recusada':
+                return styles.recusada;
+            case 'pendente':
+                return styles.pendente;
+            default:
+                return {};
+        }
+    };
 
     const getStatus = (solicitation: ISolicitation) => {
+
+        if (!solicitation) {
+            return '';
+        }
 
         if (solicitation.delivered) {
             return 'entregue'
@@ -48,168 +302,131 @@ const Solicitations = () => {
 
     }
 
-    const getStatusStyle = (status: string): TextStyle => {
+    const aceitarSolicitacao = (solicitation: ISolicitation) => {
 
-        switch (status.toLowerCase()) {
-            case 'aceita':
-                return styles.aceita;
-            case 'entregue':
-                return styles.aceita;
-            case 'recusada':
-                return styles.recusada;
-            case 'pendente':
-                return styles.pendente;
-            default:
-                return {};
-        }
-    };
+        solicitation.accepted = true;
+        solicitation.rejected = false;
 
+        setSolicitation(solicitation)
+        setStatus(getStatus(solicitation))
 
-    useEffect(() => {
-        console.log('USE EFFECT');
-        const userId = storageLocal.getString('uid');
-    
-        const solicitationsRef = firestore().collection('solicitations');
-        const donationsRef = firestore().collection('donations');
-    
-        let newMyDonations: ISolicitationItem[] = [];
-        let newDonationRequests: ISolicitationItem[] = [];
-    
-        solicitationsRef.where('donatorId', '==', userId).get().then((querySnapshot) => {
-            querySnapshot.forEach((solicitation) => {
-
-                console.log('SOLIC', solicitation.data());
-                
-
-                const solicitationData = solicitation.data() as ISolicitation;
-                donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
-                    if (donationDoc.exists) {
-                        const donation = donationDoc.data() as IDonation;
-                        const solicitationItem: ISolicitationItem = {
-                            id: solicitation.id,
-                            image: donation.image,
-                            title: donation.itemName,
-                            status: getStatus(solicitationData).toUpperCase()
-                        }
-                        newMyDonations.push(solicitationItem);
-                        setMyDonations(newMyDonations); // Atualiza o estado aqui
-                    }
-                });
-            });
+        firestore().collection('solicitations').doc(solicitation.id).update({
+            accepted: true,
+            rejected: false
         });
-    
-        solicitationsRef.where('receiverId', '==', userId).get().then((querySnapshot) => {
-            querySnapshot.forEach((solicitation) => {
-                const solicitationData = solicitation.data() as ISolicitation;
-                donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
-                    if (donationDoc.exists) {
-                        const donation = donationDoc.data() as IDonation;
-                        const solicitationItem: ISolicitationItem = {
-                            image: donation.image,
-                            title: donation.itemName,
-                            status: getStatus(solicitationData).toUpperCase(),
-                            id: solicitation.id
-                        }
-                        newDonationRequests.push(solicitationItem);
-                        setDonationRequests(newDonationRequests); // Atualiza o estado aqui
-                    }
-                });
-            });
+    }
+
+    const cancelarSolicitacao = (solicitation: ISolicitation) => {
+
+        solicitation.accepted = false;
+        solicitation.rejected = true;
+
+        setSolicitation(solicitation)
+        setStatus(getStatus(solicitation))
+
+
+        firestore().collection('solicitations').doc(solicitation.id).update({
+            accepted: false,
+            rejected: true
+        }).catch((erro) => {
+            console.log(erro);
+
         });
-    }, [isFocused]);
+    }
+
+    const entregarSolicitacao = (solicitation: ISolicitation) => {
+
+        solicitation.delivered = true;
+
+        setDelivered(true)
+        setSolicitation(solicitation)
+        setStatus(getStatus(solicitation))
+
+        firestore().collection('solicitations').doc(solicitation.id).update({
+            delivered: true
+        });
+    }
 
     return (
-        <ScrollView style={styles.container}>
-            {!!myDonations.length && (<View style={styles.section}>
-                <Text style={styles.sectionTitle}>Minhas doações</Text>
-                {myDonations.map((donation, index) => (
-                    <TouchableOpacity key={index} style={styles.item} onPress={()=> handleItemPress(donation.id)}> 
-                        <Image source={{ uri: donation.image }} style={styles.itemImage}  />
-                        <View style={styles.itemTextContainer}>
-                            <Text style={styles.itemTitle}>{donation.title}</Text>
-                            <Text style={[styles.itemStatus, getStatusStyle(donation.status)]}>
-                                {donation.status}
+        <View style={{ flex: 1 }}>
+            <S.Header>
+                <S.GoBackButton onPress={() => goBack()} >
+                    <CaretLeft color="gray" weight="bold" size={32} />
+                </S.GoBackButton>
+            </S.Header>
+            {!!solicitation && !!donation && (<View style={styles.header}>
+                <Image source={{ uri: donation?.image }} style={styles.itemImage} />
+                <Text style={styles.tituloAnuncio}>{donation?.itemName}</Text>
+                <Text style={[styles.status, getStatusStyle(status)]}>
+                    {getStatus(solicitation!).toUpperCase()}
+                </Text>
+            </View>)}
+
+            {!!solicitation && (<View>
+
+                {solicitation.donatorId == storageLocal.getString('uid') && !solicitation.accepted && !delivered && (
+                    <Button
+                        title="Aceitar solicitação"
+                        onPress={() => aceitarSolicitacao(solicitation!)}
+                        color="green"
+                    />)}
+
+                {solicitation.donatorId == storageLocal.getString('uid') && solicitation.accepted && !delivered && (
+                    <Button
+                        title="Marcar como entregue"
+                        onPress={() => entregarSolicitacao(solicitation!)}
+                        color="blue"
+                    />)}
+
+                {solicitation.donatorId == storageLocal.getString('uid') && solicitation.accepted && !delivered && (
+                    <Button
+                        title="Cancelar doação"
+                        onPress={() => cancelarSolicitacao(solicitation!)}
+                        color="red"
+                    />)}
+            </View>)}
+
+            {delivered && (
+                <Text style={styles.chatTitle}>Obrigado por realizar essa doação! Você está ajudando o mundo a se tornar um lugar melhor :D</Text>
+            )}
+
+            {status == 'pendente' && (
+                <Text style={styles.chatTitle}>Sua doação ainda não foi aceita pelo doador. Converse com ele no chat abaixo.</Text>
+            )}
+
+            {status == 'recusada' && (
+                <Text style={styles.chatTitle}>{'Infelizmente sua solicitação de doação não foi aceita pelo doador :('}</Text>
+            )}
+
+            {status == 'aceita' && (
+                <Text style={styles.chatTitle}>{'Obaaa! Sua solicitação foi aceita. Agora combine a entrega com o doador! :D'}</Text>
+            )}
+
+
+            {!delivered && (<View style={styles.chatContainer}>
+                <Text style={styles.chatTitle}>CHAT</Text>
+                <ScrollView style={styles.chatContainer} ref={scrollViewRef}>
+                    {messages.map((msg, index) => (
+                        <View key={index} style={msg.myText ? styles.minhaMensagem : styles.outraMensagem}>
+                            <Text>{msg.text}</Text>
+                            <Text style={styles.messageDate}>
+                                {msg.date.toLocaleDateString('pt-BR')} {msg.date.toLocaleTimeString('pt-BR')}
                             </Text>
                         </View>
-                    </TouchableOpacity>
-                ))}
+                    ))}
+                </ScrollView>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.textInput}
+                        value={text}
+                        onChangeText={setText}
+                        placeholder="Digite uma mensagem"
+                    />
+                    <Button title="Enviar" onPress={sendMessage} />
+                </View>
             </View>)}
-            {!!donationRequests.length && (<View style={styles.section}>
-                <Text style={styles.sectionTitle}>Minhas solicitações</Text>
-                {donationRequests.map((request, index) => (
-                    <TouchableOpacity key={index} style={styles.item} onPress={()=> handleItemPress(request.id)}>
-                        <Image source={{ uri: request.image }} style={styles.itemImage}  />
-                        <View style={styles.itemTextContainer}>
-                            <Text style={styles.itemTitle}>{request.title}</Text>
-                            <Text style={[styles.itemStatus, getStatusStyle(request.status)]}>
-                                {request.status}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                ))}
-            </View>)}
-            {!donationRequests.length && !myDonations.length &&(<Text style={styles.noDonations}>Você ainda não fez ou recebeu doações.</Text>)}
-        </ScrollView>
+        </View>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    section: {
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-    },
-    sectionTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center'
-    },
-    itemTitle: {
-        fontSize: 18,
-        fontWeight: 'bold'
-    },
-    noDonations: {
-        fontSize: 20,
-        textAlign: 'center',
-        textAlignVertical: 'center'
-    },
-    item: {
-        flexDirection: 'row',
-        backgroundColor: '#f0f0f0',
-        padding: 10,
-        marginVertical: 5,
-        alignItems: 'center',
-    },
-    itemImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginRight: 10,
-    },
-    itemTextContainer: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    itemStatus: {
-        fontSize: 14,
-        color: 'white',
-        padding: 5,
-        borderRadius: 5,
-        position: 'absolute',
-        right: 10,
-    },
-    aceita: {
-        backgroundColor: 'green',
-    },
-    recusada: {
-        backgroundColor: 'red',
-    },
-    pendente: {
-        backgroundColor: 'blue',
-    },
-});
-
-export default Solicitations;
+export default Solicitation;

@@ -92,12 +92,6 @@ const ItemsList = () => {
             .where('accepted', '==', true)
             .get();
 
-          if (doc.data()?.itemName == 'Fogao') {
-            console.log(doc.id);
-
-            console.log('SOLI2', solicitations.docs);
-          }
-
           if (solicitations.docs.length === 0) {
             return { ...doc.data(), id: doc.id };
           }
@@ -107,8 +101,6 @@ const ItemsList = () => {
         const filteredDonations = (await Promise.all(donationsPromises)).filter(
           (doc) => doc !== null,
         ) as IDonation[];
-
-        // console.log('DONATIONS', filteredDonations);
 
         setDonations(filteredDonations);
       } catch (error) {
@@ -203,10 +195,6 @@ export default ItemsList;
 const Screen = styled.View`
   flex: 1;
 `;
-
-// const BackgroundContainer = styled.View`
-//   /* background-color: blue; */
-// `;
 
 const ActiveIndicatorContainer = styled.View`
   flex: 1;

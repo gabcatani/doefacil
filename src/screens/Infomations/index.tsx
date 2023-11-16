@@ -1,13 +1,6 @@
-import React, { useState } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
 import LottieView from 'lottie-react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, StyleSheet, Dimensions } from 'react-native';
 
 const donationOptions = [
   {

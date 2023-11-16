@@ -78,8 +78,6 @@ const ItemDetails = ({ route }: any) => {
       delivered: false,
     };
 
-    console.log('SOLI ', solicitacao);
-
     try {
       await firestore().collection('solicitations').add(solicitacao);
       setSolicitado(true);
@@ -145,37 +143,29 @@ const ItemDetails = ({ route }: any) => {
         <NameText>
           <BoldText>Endereço:</BoldText> {item.local}
         </NameText>
-
-        <ShowMapButton onPress={handleToggle}>
-          <NameText>
-            {!showMap ? 'Ver localização no mapa' : 'Ver Imagem Do Item'}
-          </NameText>
-        </ShowMapButton>
-
-        {!isMyDonation && (
-          <View>
-            {!solicitado ? (
-              <ButtonSolicitar
-                title="Solicitar"
-                onPress={async () => {
-                  await handleSolicitar(item);
-                }}
-              />
-            ) : (
-              <NameText>Doação solicitada, aguardando confirmação.</NameText>
-            )}
-          </View>
-        )}
-
-        {isMyDonation && (
-          <ButtonDelete
-            title="Deletar anúncio"
-            onPress={async () => {
-              await handleDelete(item);
-            }}
-          />
-        )}
       </CardTextContainer>
+
+      <ShowMapButton onPress={handleToggle}>
+        <ShowMapText>
+          {!showMap ? 'Ver localização no mapa' : 'Ver Imagem Do Item'}
+        </ShowMapText>
+      </ShowMapButton>
+
+      {!solicitado ? (
+        <RequestButton onPress={() => handleSolicitar(item)}>
+          <RequestText>Solicitar doação</RequestText>
+        </RequestButton>
+      ) : (
+        <RequestConfirmText>Doação solicitada</RequestConfirmText>
+      )}
+
+      {!isMyDonation && 
+        <DeleteButton onPress={() => handleDelete(item)}>
+          <DeleteText>
+            Deletar anúncio
+          </DeleteText>
+        </DeleteButton>
+      }
     </Screen>
   );
 };
@@ -291,11 +281,29 @@ const RequestConfirmText = styled.Text`
   width: 70%;
 `;
 
-const ButtonDelete = styled.Button`
-  background-color: red;
-  padding: 15px;
-  align-items: center;
+const DeleteButton = styled.TouchableOpacity`
   justify-content: center;
-  border-radius: 5px;
-  width: 100%;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+const DeleteText = styled.Text`
+  font-size: 24px;
+  color: white;
+  background-color: #ff6a50;
+  border-radius: 10px;
+  text-align: center;
+  padding: 10px;
+  width: 70%;
+`;
+
+const DeleteConfirmText = styled.Text`
+  align-self: center;
+  font-size: 24px;
+  color: black;
+  background-color: #e2e0df;
+  border-radius: 10px;
+  text-align: center;
+  padding: 10px;
+  width: 70%;
 `;
