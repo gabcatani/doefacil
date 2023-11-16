@@ -24,7 +24,7 @@ const Solicitations = () => {
     const handleItemPress = useCallback((solicitationId: string) => {
 
         navigation.navigate('Solicitation', { id: solicitationId });
-      }, [navigation]);
+    }, [navigation]);
 
     const getStatus = (solicitation: ISolicitation) => {
 
@@ -68,53 +68,63 @@ const Solicitations = () => {
     useEffect(() => {
         console.log('USE EFFECT');
         const userId = storageLocal.getString('uid');
-    
+
         const solicitationsRef = firestore().collection('solicitations');
         const donationsRef = firestore().collection('donations');
-    
-        let newMyDonations: ISolicitationItem[] = [];
-        let newDonationRequests: ISolicitationItem[] = [];
-    
+
         solicitationsRef.where('donatorId', '==', userId).get().then((querySnapshot) => {
+            const promises = [];
+        
             querySnapshot.forEach((solicitation) => {
-
-                console.log('SOLIC', solicitation.data());
-                
-
                 const solicitationData = solicitation.data() as ISolicitation;
-                donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
+        
+                const promise = donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
                     if (donationDoc.exists) {
                         const donation = donationDoc.data() as IDonation;
-                        const solicitationItem: ISolicitationItem = {
+                        return {
                             id: solicitation.id,
                             image: donation.image,
                             title: donation.itemName,
                             status: getStatus(solicitationData).toUpperCase()
-                        }
-                        newMyDonations.push(solicitationItem);
-                        setMyDonations(newMyDonations); // Atualiza o estado aqui
+                        };
                     }
                 });
+        
+                promises.push(promise);
+            });
+        
+            Promise.all(promises).then((results) => {
+                const newMyDonations = results.filter(item => item != null);
+                setMyDonations(newMyDonations);
             });
         });
-    
+        
         solicitationsRef.where('receiverId', '==', userId).get().then((querySnapshot) => {
+            const promises = [];
+
             querySnapshot.forEach((solicitation) => {
                 const solicitationData = solicitation.data() as ISolicitation;
-                donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
+                
+                const promise = donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
                     if (donationDoc.exists) {
                         const donation = donationDoc.data() as IDonation;
-                        const solicitationItem: ISolicitationItem = {
+                        return {
                             image: donation.image,
                             title: donation.itemName,
                             status: getStatus(solicitationData).toUpperCase(),
                             id: solicitation.id
-                        }
-                        newDonationRequests.push(solicitationItem);
-                        setDonationRequests(newDonationRequests); // Atualiza o estado aqui
+                        };
                     }
                 });
+
+                promises.push(promise);
             });
+
+            Promise.all(promises).then((results) => {
+                const newDonationRequests = results.filter(item => item != null);
+                setDonationRequests(newDonationRequests);
+            });
+
         });
     }, [isFocused]);
 
@@ -123,8 +133,8 @@ const Solicitations = () => {
             {!!myDonations.length && (<View style={styles.section}>
                 <Text style={styles.sectionTitle}>Minhas doações</Text>
                 {myDonations.map((donation, index) => (
-                    <TouchableOpacity key={index} style={styles.item} onPress={()=> handleItemPress(donation.id)}> 
-                        <Image source={{ uri: donation.image }} style={styles.itemImage}  />
+                    <TouchableOpacity key={index} style={styles.item} onPress={() => handleItemPress(donation.id)}>
+                        <Image source={{ uri: donation.image }} style={styles.itemImage} />
                         <View style={styles.itemTextContainer}>
                             <Text style={styles.itemTitle}>{donation.title}</Text>
                             <Text style={[styles.itemStatus, getStatusStyle(donation.status)]}>
@@ -137,8 +147,8 @@ const Solicitations = () => {
             {!!donationRequests.length && (<View style={styles.section}>
                 <Text style={styles.sectionTitle}>Minhas solicitações</Text>
                 {donationRequests.map((request, index) => (
-                    <TouchableOpacity key={index} style={styles.item} onPress={()=> handleItemPress(request.id)}>
-                        <Image source={{ uri: request.image }} style={styles.itemImage}  />
+                    <TouchableOpacity key={index} style={styles.item} onPress={() => handleItemPress(request.id)}>
+                        <Image source={{ uri: request.image }} style={styles.itemImage} />
                         <View style={styles.itemTextContainer}>
                             <Text style={styles.itemTitle}>{request.title}</Text>
                             <Text style={[styles.itemStatus, getStatusStyle(request.status)]}>
@@ -148,7 +158,7 @@ const Solicitations = () => {
                     </TouchableOpacity>
                 ))}
             </View>)}
-            {!donationRequests.length && !myDonations.length &&(<Text style={styles.noDonations}>Você ainda não fez ou recebeu doações.</Text>)}
+            {!donationRequests.length && !myDonations.length && (<Text style={styles.noDonations}>Você ainda não fez ou recebeu doações.</Text>)}
         </ScrollView>
     );
 };

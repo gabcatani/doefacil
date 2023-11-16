@@ -46,6 +46,28 @@ const ItemsList = () => {
   const handleToggle = () => {
     setShowMap((prevState) => !prevState);
   };
+  
+  const calcularDistancia = (item: IDonation) => {
+    
+    if (!currentRegion || !item.address) {
+      return 0;
+    }
+
+    const rad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371e3;
+    const dLat = rad(item.address.lat - currentRegion.latitude);
+    const dLong = rad(item.address.lng - currentRegion.longitude);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(rad(currentRegion.latitude)) * Math.cos(rad(item.address.lat)) *
+      Math.sin(dLong / 2) * Math.sin(dLong / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; 
+
+    return distance.toFixed(0);
+  };
 
   const handleItemPress = useCallback(
     (item: IDonation) => {
@@ -80,11 +102,6 @@ const ItemsList = () => {
     const fetchDonations = async () => {
       try {
         const querySnapshot = await firestore().collection('donations').get();
-        const data = querySnapshot.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        })) as IDonation[];
-        setDonations(data);
         const donationsPromises = querySnapshot.docs.map(async (doc) => {
           const solicitations = await firestore()
             .collection('solicitations')
@@ -123,7 +140,7 @@ const ItemsList = () => {
           </ImagemContainer>
           <CardTextContainer>
             <NameText>{item.itemName}</NameText>
-            {/* <CategoryText numberOfLines={1} ellipsizeMode="tail">Está a {calcularDistancia(item)} de você</CategoryText> */}
+            <CategoryText numberOfLines={1} ellipsizeMode="tail">Está a {calcularDistancia(item)} metros de você</CategoryText>
           </CardTextContainer>
         </Card>
       </TouchableOpacity>
@@ -282,7 +299,6 @@ const PinShaft = styled(View)`
   borderleftwidth: 10px;
   borderrightwidth: 10px;
   borderbottomwidth: 20px;
-  borderstyle: solid;
   backgroundcolor: transparent;
   borderleftcolor: transparent;
   borderrightcolor: transparent;

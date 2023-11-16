@@ -141,59 +141,59 @@ const DonationForm = () => {
   } = useForm<IFormInput>({ resolver: yupResolver(validationSchema), mode: 'onSubmit' });
 
   const onSubmit = async (data: any) => {
-    console.log('submit', data);
-    // setLoading(true);
 
-    // if (currentStep < 3) {
-    //   nextStep();
-    //   return;
-    // }
+    setLoading(true);
 
-    // const { city, neighborhood, street, number } = data;
-    // const address = `${city}-SC,${neighborhood},${street}-${number}`;
+    if (currentStep < 3) {
+      nextStep();
+      return;
+    }
 
-    // const { lat, lng } = await getAddressCoordinates(address);
+    const { city, neighborhood, street, number } = data;
+    const address = `${city}-SC,${neighborhood},${street}-${number}`;
 
-    // const imageRef = storage().ref(`images/${data.name}`);
-    // await imageRef.putFile(imageUri ?? '');
-    // const imageUrl = await imageRef.getDownloadURL();
+    const { lat, lng } = await getAddressCoordinates(address);
 
-    // if (getStoredLocation()) {
-    //   useToast({
-    //     message: 'Localização não disponível.',
-    //     type: TOASTTYPE.ERROR,
-    //   });
-    //   return;
-    // }
+    const imageRef = storage().ref(`images/${data.name}`);
+    await imageRef.putFile(imageUri ?? '');
+    const imageUrl = await imageRef.getDownloadURL();
 
-    // useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
+    if (getStoredLocation()) {
+      useToast({
+        message: 'Localização não disponível.',
+        type: TOASTTYPE.ERROR,
+      });
+      return;
+    }
 
-    // try {
-    //   await firestore()
-    //     .collection('donations')
-    //     .add({
-    //       itemName: data.name,
-    //       itemCategory: data.category,
-    //       donatorId: storageLocal.getString('uid'),
-    //       usageTime: data.usageTime,
-    //       description: data.description,
-    //       local: address,
-    //       address: {
-    //         lat,
-    //         lng,
-    //       },
-    //       image: imageUrl ?? '',
-    //     });
-    //   reset();
-    //   setImageUri(null);
-    //   useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
-    // } catch (error) {
-    //   console.error('Erro ao adicionar doação:', error);
-    //   useToast({ message: 'Tente Novamente', type: TOASTTYPE.ERROR });
-    // } finally {
-    //   setLoading(false);
-    // }
-    // setLoading(false);
+    useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
+
+    try {
+      await firestore()
+        .collection('donations')
+        .add({
+          itemName: data.name,
+          itemCategory: data.category,
+          donatorId: storageLocal.getString('uid'),
+          usageTime: data.usageTime,
+          description: data.description,
+          local: address,
+          address: {
+            lat,
+            lng,
+          },
+          image: imageUrl ?? '',
+        });
+      reset();
+      setImageUri(null);
+      useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
+    } catch (error) {
+      console.error('Erro ao adicionar doação:', error);
+      useToast({ message: 'Tente Novamente', type: TOASTTYPE.ERROR });
+    } finally {
+      setLoading(false);
+    }
+    setLoading(false);
   };
 
   const IconTextInput = ({ icon, ...props }) => {
