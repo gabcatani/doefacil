@@ -1,8 +1,8 @@
 import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-import { CaretLeft } from 'phosphor-react-native';
+import { CaretLeft, GlobeHemisphereWest } from 'phosphor-react-native';
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, Dimensions } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
@@ -13,18 +13,25 @@ interface IParamsItem {
   item: IDonation;
 }
 interface IDonation {
-  id: string;
-  itemName: string;
-  itemCategory: string;
-  local: string;
-  address: {
+  addresss: {
+    bairro: string;
+    city: string;
+    number: string;
+    street: string;
+  };
+  coordinates: {
     lat: number;
     lng: number;
   };
   description: string;
-  image: string;
+  donatorId: string;
+  imageUrl: string;
+  itemCategory: string;
+  itemName: string;
   usageTime: string;
 }
+
+const screenDimensions = Dimensions.get('window');
 
 const ItemDetails = ({ route }: any) => {
   const { item }: IParamsItem = route.params;
@@ -34,6 +41,7 @@ const ItemDetails = ({ route }: any) => {
   const [isMyDonation, setIsMyDonation] = useState(true);
 
   const navigation = useNavigation();
+  const screenDimensions = Dimensions.get('window');
 
   const goBack = () => {
     navigation.goBack();
@@ -55,7 +63,7 @@ const ItemDetails = ({ route }: any) => {
     }
 
     fetchData();
-  }, [item.donatorId, item.id]);
+  }, [item.donatorId]);
 
   const handleDelete = async (item: IDonation) => {
     firestore().collection('donations').doc(item.id).delete();
@@ -93,14 +101,22 @@ const ItemDetails = ({ route }: any) => {
   };
 
   const mapRegion = {
-    latitude: item.address.lat,
-    longitude: item.address.lng,
+    latitude: item.coordinates.lat,
+    longitude: item.coordinates.lng,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };
+  const fullAddress =
+    item.addresss.street +
+    ' - ' +
+    item.addresss.number +
+    ' - ' +
+    item.addresss.bairro +
+    ' - ' +
+    item.addresss.city;
 
   return (
-    <Screen>
+    <Screen showsVerticalScrollIndicator={false}>
       <Header>
         <GoBackButton onPress={goBack}>
           <CaretLeft color="gray" weight="bold" size={32} />
@@ -108,11 +124,27 @@ const ItemDetails = ({ route }: any) => {
         <HeaderText>{item.itemName}</HeaderText>
       </Header>
       {!showMap ? (
-        <ImagemContainer>
-          <ItemImage source={{ uri: item.image }} />
-        </ImagemContainer>
+        <>
+          <ImagemContainer>
+            <ItemImage source={{ uri: item.imageUrl }} />
+          </ImagemContainer>
+          <CardTextContainer>
+            <NameText>
+              <BoldText>Descrição:</BoldText> {item.description}
+            </NameText>
+            <NameText>
+              <BoldText>Categoria:</BoldText> {item.itemCategory}
+            </NameText>
+            <NameText>
+              <BoldText>Tempo de uso:</BoldText> {item.usageTime}
+            </NameText>
+            <NameText>
+              <BoldText>Endereço:</BoldText> {fullAddress}
+            </NameText>
+          </CardTextContainer>
+        </>
       ) : (
-        <MapContainer>
+        <MapContainer screenDimensions={screenDimensions}>
           <Map
             initialRegion={mapRegion}
             onMapReady={() => {
@@ -130,49 +162,66 @@ const ItemDetails = ({ route }: any) => {
           </Map>
         </MapContainer>
       )}
-      <CardTextContainer>
-        <NameText>
-          <BoldText>Descrição:</BoldText> {item.description}
-        </NameText>
-        <NameText>
-          <BoldText>Categoria:</BoldText> {item.itemCategory}
-        </NameText>
-        <NameText>
-          <BoldText>Tempo de uso:</BoldText> {item.usageTime}
-        </NameText>
-        <NameText>
-          <BoldText>Endereço:</BoldText> {item.local}
-        </NameText>
-      </CardTextContainer>
-
-      <ShowMapButton onPress={handleToggle}>
-        <ShowMapText>
-          {!showMap ? 'Ver localização no mapa' : 'Ver Imagem Do Item'}
-        </ShowMapText>
-      </ShowMapButton>
-
-      {!solicitado ? (
-        <RequestButton onPress={() => handleSolicitar(item)}>
-          <RequestText>Solicitar doação</RequestText>
-        </RequestButton>
-      ) : (
-        <RequestConfirmText>Doação solicitada</RequestConfirmText>
-      )}
-
-      {!isMyDonation && 
-        <DeleteButton onPress={() => handleDelete(item)}>
-          <DeleteText>
-            Deletar anúncio
-          </DeleteText>
-        </DeleteButton>
-      }
+      <ButtonContainer>
+        <StyledButton onPress={handleToggle} backgroundColor="orange">
+          <ButtonText color="white">{!showMap ? 'Mapa' : 'Item'}</ButtonText>
+          <GlobeHemisphereWest
+            color="gray"
+            weight="bold"
+            size={32}
+            style={{ marginLeft: 10 }}
+          />
+        </StyledButton>
+        {!isMyDonation &&
+          (!solicitado ? (
+            <StyledButton
+              onPress={async () => {
+                await handleSolicitar(item);
+              }}
+              backgroundColor="green"
+            >
+              <ButtonText color="white">Solicitar</ButtonText>
+              <GlobeHemisphereWest
+                color="gray"
+                weight="bold"
+                size={32}
+                style={{ marginLeft: 10 }}
+              />
+            </StyledButton>
+          ) : (
+            <StyledButton backgroundColor="white">
+              <ButtonText color="gray">Solicitada</ButtonText>
+              <GlobeHemisphereWest
+                color="gray"
+                weight="bold"
+                size={32}
+                style={{ marginLeft: 10 }}
+              />
+            </StyledButton>
+          ))}
+        {isMyDonation && (
+          <StyledButton
+            onPress={async () => {
+              await handleDelete(item);
+            }}
+          >
+            <ButtonText color="white">Deletar anúncio</ButtonText>
+            <GlobeHemisphereWest
+              color="gray"
+              weight="bold"
+              size={32}
+              style={{ marginLeft: 10 }}
+            />
+          </StyledButton>
+        )}
+      </ButtonContainer>
     </Screen>
   );
 };
 
 export default ItemDetails;
 
-const Screen = styled.View`
+const Screen = styled.ScrollView`
   flex: 1;
 `;
 
@@ -196,19 +245,21 @@ const HeaderText = styled.Text`
 const ImagemContainer = styled.View`
   align-items: center;
   justify-content: center;
-  margin-top: 25px;
+  margin: 25px;
+  border-radius: 20px;
 `;
 
 const ItemImage = styled.Image`
   width: 300px;
   height: 300px;
+  border-radius: 20px;
 `;
 
 const CardTextContainer = styled.View`
-  background-color: #d9cdcd;
+  background-color: #e0e0e0;
   border-radius: 20px;
   padding: 20px;
-  margin-top: 20px;
+  margin: 20px;
 `;
 
 const BoldText = styled.Text`
@@ -217,6 +268,13 @@ const BoldText = styled.Text`
 
 const NameText = styled.Text`
   font-size: 24px;
+`;
+
+const MapContainer = styled.View`
+  flex: 1;
+  height: ${(props) => props.screenDimensions.height - 160 || '1px'};
+  width: ${(props) => props.screenDimensions.width - 10 || '1px'};
+  margin: 20px;
 `;
 
 const Map = styled(MapView)`
@@ -232,78 +290,26 @@ const CalloutTitle = styled.Text`
   font-size: 16px;
 `;
 
-const MapContainer = styled.View`
+const ButtonContainer = styled.View`
   flex: 1;
-  margin: 20px;
-`;
-
-const ShowMapButton = styled.TouchableOpacity`
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  margin-top: 10px;
-  margin-bottom: 20px;
 `;
 
-const ShowMapText = styled.Text`
-  font-size: 24px;
-  color: white;
-  background-color: coral;
-  border-radius: 10px;
-  text-align: center;
-  padding: 10px;
-  width: 70%;
-`;
-
-const RequestButton = styled.TouchableOpacity`
+const StyledButton = styled.TouchableOpacity`
+  flex: 1;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  margin-bottom: 10px;
-`;
-
-const RequestText = styled.Text`
-  font-size: 24px;
-  color: white;
-  background-color: coral;
+  background-color: ${(props) => props.backgroundColor || 'red'};
   border-radius: 10px;
-  text-align: center;
   padding: 10px;
-  width: 70%;
+  margin: 10px;
 `;
 
-const RequestConfirmText = styled.Text`
-  align-self: center;
+const ButtonText = styled.Text`
   font-size: 24px;
-  color: black;
-  background-color: #e2e0df;
-  border-radius: 10px;
+  color: ${(props) => props.color || 'black'};
   text-align: center;
-  padding: 10px;
-  width: 70%;
-`;
-
-const DeleteButton = styled.TouchableOpacity`
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
-const DeleteText = styled.Text`
-  font-size: 24px;
-  color: white;
-  background-color: #ff6a50;
-  border-radius: 10px;
-  text-align: center;
-  padding: 10px;
-  width: 70%;
-`;
-
-const DeleteConfirmText = styled.Text`
-  align-self: center;
-  font-size: 24px;
-  color: black;
-  background-color: #e2e0df;
-  border-radius: 10px;
-  text-align: center;
-  padding: 10px;
-  width: 70%;
 `;

@@ -19,16 +19,21 @@ interface Region {
 }
 
 interface IDonation {
-  id: string;
-  itemName: string;
-  itemCategory: string;
-  local: string;
   address: {
+    bairro: string;
+    city: string;
+    number: string;
+    street: string;
+  };
+  coordinates: {
     lat: number;
     lng: number;
   };
   description: string;
-  image: string;
+  donatorId: string;
+  imageUrl: string;
+  itemCategory: string;
+  itemName: string;
   usageTime: string;
 }
 
@@ -46,27 +51,32 @@ const ItemsList = () => {
   const handleToggle = () => {
     setShowMap((prevState) => !prevState);
   };
-  
-  const calcularDistancia = (item: IDonation) => {
-    
-    if (!currentRegion || !item.address) {
-      return 0;
-    }
+
+  const calculateDistance = (item: IDonation) => {
+    if (!currentRegion || !item.coordinates) return;
 
     const rad = (x: number) => (x * Math.PI) / 180;
+
     const R = 6371e3;
-    const dLat = rad(item.address.lat - currentRegion.latitude);
-    const dLong = rad(item.address.lng - currentRegion.longitude);
+    const dLat = rad(item.coordinates.lat - currentRegion.latitude);
+    const dLong = rad(item.coordinates.lng - currentRegion.longitude);
 
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(rad(currentRegion.latitude)) * Math.cos(rad(item.address.lat)) *
-      Math.sin(dLong / 2) * Math.sin(dLong / 2);
+      Math.cos(rad(currentRegion.latitude)) *
+        Math.cos(rad(item.coordinates.lat)) *
+        Math.sin(dLong / 2) *
+        Math.sin(dLong / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; 
+    const distance = R * c; // Distância em metros
 
-    return Number(distance.toFixed(0));
+    if (distance < 1000) {
+      return distance.toFixed(0) + ' Metros';
+    } else {
+      const distanceKm = (distance / 1000).toFixed(1);
+      return distanceKm + ' Km';
+    }
   };
 
   const handleItemPress = useCallback(
@@ -119,14 +129,18 @@ const ItemsList = () => {
           (doc) => doc !== null,
         ) as IDonation[];
 
-      const donationsDistance = filteredDonations.map(donation => ({
-        donation,
-        distance: calcularDistancia(donation)
-      }));
+        const donationsDistance = filteredDonations.map((donation) => ({
+          donation,
+          distance: calculateDistance(donation),
+        }));
 
-      donationsDistance.sort((a, b) => a.distance - b.distance);
+        donationsDistance.sort((a, b) => a.distance - b.distance);
 
-        setDonations(donationsDistance.map(donationDistance => donationDistance.donation));
+        setDonations(
+          donationsDistance.map(
+            (donationDistance) => donationDistance.donation,
+          ),
+        );
       } catch (error) {
         console.error('Erro ao buscar doações: ', error);
       }
@@ -143,11 +157,13 @@ const ItemsList = () => {
       >
         <Card key={index}>
           <ImagemContainer>
-            <ItemImage source={{ uri: item.image }} />
+            <ItemImage source={{ uri: item.imageUrl }} />
           </ImagemContainer>
           <CardTextContainer>
             <NameText>{item.itemName}</NameText>
-            <CategoryText numberOfLines={1} ellipsizeMode="tail">Está a {calcularDistancia(item)} metros de você</CategoryText>
+            <CategoryText numberOfLines={1} ellipsizeMode="tail">
+              {calculateDistance(item)}
+            </CategoryText>
           </CardTextContainer>
         </Card>
       </TouchableOpacity>
@@ -157,12 +173,15 @@ const ItemsList = () => {
 
   const renderDonationMarker = (item: IDonation) => (
     <Marker
-      key={item.id}
-      coordinate={{ latitude: item.address.lat, longitude: item.address.lng }}
+      key={item.donatorId}
+      coordinate={{
+        latitude: item.coordinates.lat,
+        longitude: item.coordinates.lng,
+      }}
       anchor={{ x: 0.5, y: 1 }}
     >
       <View>
-        <MarkerImage source={{ uri: item.image }} />
+        <MarkerImage source={{ uri: item.imageUrl }} />
         <PinShaft />
       </View>
       <Callout>
@@ -260,7 +279,7 @@ const ImagemContainer = styled.View`
 const ItemImage = styled.Image`
   width: 100px;
   height: 100px;
-  border-radius: 99px;
+  border-radius: 20px;
 `;
 
 const NameText = styled.Text`
@@ -273,12 +292,6 @@ const CategoryText = styled.Text`
   textalign: left;
 `;
 
-const Toggle = styled.View`
-  /* flex: 1; */
-  flex-direction: row;
-  justify-content: center;
-`;
-
 const ToggleButton = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: center;
@@ -288,6 +301,7 @@ const ToggleText = styled.Text`
   font-size: 16px;
   margin: 10px;
 `;
+
 const Map = styled(MapView)`
   flex: 1;
 `;
@@ -295,8 +309,8 @@ const Map = styled(MapView)`
 const MarkerImage = styled.Image`
   width: 70px;
   height: 70px;
-  border-radius: 20px;
-  background-color: transparent;
+  border-radius: 2px;
+  background-color: red;
   border: 2px solid white;
 `;
 

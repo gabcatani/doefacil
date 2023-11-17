@@ -1,225 +1,314 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextStyle } from 'react-native';
-import { storageLocal } from '../../../App';
 import firestore from '@react-native-firebase/firestore';
-import Solicitation, { ISolicitation } from '../Solicitation';
-import { IDonation } from '../ItemMap/types';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  type TextStyle,
+} from 'react-native';
+import styled from 'styled-components/native';
+import { boolean } from 'yup';
+import { storageLocal } from '../../../App';
 
-type ISolicitationItem = {
-    id: string,
-    title: string,
-    status: string,
-    image: string
+interface ISolicitationItem {
+  id: string;
+  title: string;
+  status: string;
+  image: string;
 }
 
 const Solicitations = () => {
-    const [donationRequests, setDonationRequests] = useState<ISolicitationItem[]>([]);
-    const [myDonations, setMyDonations] = useState<ISolicitationItem[]>([]);
+  const [donationRequests, setDonationRequests] = useState<ISolicitationItem[]>(
+    [],
+  );
+  const [myDonations, setMyDonations] = useState<ISolicitationItem[]>([]);
+  const [showMyDonations, setShowMyDonations] = useState<boolean>(true);
+  const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
 
-    const navigation = useNavigation<any>()
+  const handleToggle = () => {
+    setShowMyDonations((prevState) => !prevState);
+  };
 
-    const isFocused = useIsFocused();
+  const handleItemPress = useCallback(
+    (solicitationId: string) => {
+      navigation.navigate('Solicitation', { id: solicitationId });
+    },
+    [navigation],
+  );
 
-    const handleItemPress = useCallback((solicitationId: string) => {
-
-        navigation.navigate('Solicitation', { id: solicitationId });
-    }, [navigation]);
-
-    const getStatus = (solicitation: ISolicitation) => {
-
-        if (solicitation.delivered) {
-            return 'entregue'
-        }
-
-        if (!solicitation.rejected && !solicitation.accepted) {
-            return 'pendente'
-        }
-
-        if (solicitation.rejected) {
-            return 'recusada'
-        }
-
-        if (solicitation.accepted) {
-            return 'aceita'
-        }
-
-        return ''
-
+  const getStatus = (solicitation: ISolicitation) => {
+    if (solicitation.delivered) {
+      return 'entregue';
     }
 
-    const getStatusStyle = (status: string): TextStyle => {
+    if (!solicitation.rejected && !solicitation.accepted) {
+      return 'pendente';
+    }
 
-        switch (status.toLowerCase()) {
-            case 'aceita':
-                return styles.aceita;
-            case 'entregue':
-                return styles.aceita;
-            case 'recusada':
-                return styles.recusada;
-            case 'pendente':
-                return styles.pendente;
-            default:
-                return {};
-        }
-    };
+    if (solicitation.rejected) {
+      return 'recusada';
+    }
 
+    if (solicitation.accepted) {
+      return 'aceita';
+    }
 
-    useEffect(() => {
-        console.log('USE EFFECT');
-        const userId = storageLocal.getString('uid');
+    return '';
+  };
 
-        const solicitationsRef = firestore().collection('solicitations');
-        const donationsRef = firestore().collection('donations');
+  const getStatusStyle = (status: string): TextStyle => {
+    switch (status.toLowerCase()) {
+      case 'aceita':
+        return styles.aceita;
+      case 'entregue':
+        return styles.aceita;
+      case 'recusada':
+        return styles.recusada;
+      case 'pendente':
+        return styles.pendente;
+      default:
+        return {};
+    }
+  };
 
-        solicitationsRef.where('donatorId', '==', userId).get().then((querySnapshot) => {
-            const promises = [];
-        
-            querySnapshot.forEach((solicitation) => {
-                const solicitationData = solicitation.data() as ISolicitation;
-        
-                const promise = donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
-                    if (donationDoc.exists) {
-                        const donation = donationDoc.data() as IDonation;
-                        return {
-                            id: solicitation.id,
-                            image: donation.image,
-                            title: donation.itemName,
-                            status: getStatus(solicitationData).toUpperCase()
-                        };
-                    }
-                });
-        
-                promises.push(promise);
+  useEffect(() => {
+    const userId = storageLocal.getString('uid');
+
+    const solicitationsRef = firestore().collection('solicitations');
+    const donationsRef = firestore().collection('donations');
+
+    solicitationsRef
+      .where('donatorId', '==', userId)
+      .get()
+      .then((querySnapshot) => {
+        const promises = [];
+
+        querySnapshot.forEach((solicitation) => {
+          const solicitationData = solicitation.data() as ISolicitation;
+
+          const promise = donationsRef
+            .doc(solicitationData.donationId)
+            .get()
+            .then((donationDoc) => {
+              if (donationDoc.exists) {
+                const donation = donationDoc.data() as IDonation;
+                return {
+                  id: solicitation.id,
+                  image: donation.image,
+                  title: donation.itemName,
+                  status: getStatus(solicitationData).toUpperCase(),
+                };
+              }
             });
-        
-            Promise.all(promises).then((results) => {
-                const newMyDonations = results.filter(item => item != null);
-                setMyDonations(newMyDonations);
-            });
+
+          promises.push(promise);
         });
-        
-        solicitationsRef.where('receiverId', '==', userId).get().then((querySnapshot) => {
-            const promises = [];
 
-            querySnapshot.forEach((solicitation) => {
-                const solicitationData = solicitation.data() as ISolicitation;
-                
-                const promise = donationsRef.doc(solicitationData.donationId).get().then((donationDoc) => {
-                    if (donationDoc.exists) {
-                        const donation = donationDoc.data() as IDonation;
-                        return {
-                            image: donation.image,
-                            title: donation.itemName,
-                            status: getStatus(solicitationData).toUpperCase(),
-                            id: solicitation.id
-                        };
-                    }
-                });
-
-                promises.push(promise);
-            });
-
-            Promise.all(promises).then((results) => {
-                const newDonationRequests = results.filter(item => item != null);
-                setDonationRequests(newDonationRequests);
-            });
-
+        Promise.all(promises).then((results) => {
+          const newMyDonations = results.filter((item) => item != null);
+          setMyDonations(newMyDonations);
         });
-    }, [isFocused]);
+      });
 
-    return (
-        <ScrollView style={styles.container}>
-            {!!myDonations.length && (<View style={styles.section}>
-                <Text style={styles.sectionTitle}>Minhas doações</Text>
-                {myDonations.map((donation, index) => (
-                    <TouchableOpacity key={index} style={styles.item} onPress={() => handleItemPress(donation.id)}>
-                        <Image source={{ uri: donation.image }} style={styles.itemImage} />
-                        <View style={styles.itemTextContainer}>
-                            <Text style={styles.itemTitle}>{donation.title}</Text>
-                            <Text style={[styles.itemStatus, getStatusStyle(donation.status)]}>
-                                {donation.status}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                ))}
-            </View>)}
-            {!!donationRequests.length && (<View style={styles.section}>
-                <Text style={styles.sectionTitle}>Minhas solicitações</Text>
-                {donationRequests.map((request, index) => (
-                    <TouchableOpacity key={index} style={styles.item} onPress={() => handleItemPress(request.id)}>
-                        <Image source={{ uri: request.image }} style={styles.itemImage} />
-                        <View style={styles.itemTextContainer}>
-                            <Text style={styles.itemTitle}>{request.title}</Text>
-                            <Text style={[styles.itemStatus, getStatusStyle(request.status)]}>
-                                {request.status}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                ))}
-            </View>)}
-            {!donationRequests.length && !myDonations.length && (<Text style={styles.noDonations}>Você ainda não fez ou recebeu doações.</Text>)}
-        </ScrollView>
-    );
+    solicitationsRef
+      .where('receiverId', '==', userId)
+      .get()
+      .then((querySnapshot) => {
+        const promises = [];
+
+        querySnapshot.forEach((solicitation) => {
+          const solicitationData = solicitation.data() as ISolicitation;
+
+          const promise = donationsRef
+            .doc(solicitationData.donationId)
+            .get()
+            .then((donationDoc) => {
+              if (donationDoc.exists) {
+                const donation = donationDoc.data() as IDonation;
+                return {
+                  image: donation.image,
+                  title: donation.itemName,
+                  status: getStatus(solicitationData).toUpperCase(),
+                  id: solicitation.id,
+                };
+              }
+            });
+
+          promises.push(promise);
+        });
+
+        Promise.all(promises).then((results) => {
+          const newDonationRequests = results.filter((item) => item != null);
+          setDonationRequests(newDonationRequests);
+        });
+      });
+  }, [isFocused]);
+
+  return (
+    <Screen>
+      <Header>
+        <HeaderText>Doações Disponíveis</HeaderText>
+      </Header>
+      <ToggleButton onPress={handleToggle}>
+        <ToggleText>Minhas doações</ToggleText>
+        <ToggleText>Minhas solicitações</ToggleText>
+      </ToggleButton>
+      {showMyDonations && (
+        <View style={styles.section}>
+          {myDonations.map((donation, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.item}
+              onPress={() => {
+                handleItemPress(donation.id);
+              }}
+            >
+              <Image
+                source={{ uri: donation.image }}
+                style={styles.itemImage}
+              />
+              <View style={styles.itemTextContainer}>
+                <Text style={styles.itemTitle}>{donation.title}</Text>
+                <Text
+                  style={[styles.itemStatus, getStatusStyle(donation.status)]}
+                >
+                  {donation.status}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      {!showMyDonations && (
+        <View style={styles.section}>
+          {donationRequests.map((request, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.item}
+              onPress={() => {
+                handleItemPress(request.id);
+              }}
+            >
+              <Image source={{ uri: request.image }} style={styles.itemImage} />
+              <View style={styles.itemTextContainer}>
+                <Text style={styles.itemTitle}>{request.title}</Text>
+                <Text
+                  style={[styles.itemStatus, getStatusStyle(request.status)]}
+                >
+                  {request.status}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      {donationRequests.length === 0 && myDonations.length === 0 && (
+        <EmptyScreen>
+          <StyledText>Você ainda não fez ou recebeu doações.</StyledText>
+        </EmptyScreen>
+      )}
+    </Screen>
+  );
 };
 
+const Screen = styled.View`
+  flex: 1;
+`;
+
+const EmptyScreen = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+
+const StyledText = styled.Text`
+  font-size: 20px;
+  text-align: center;
+  text-align-vertical: center;
+`;
+
+const ToggleButton = styled.TouchableOpacity`
+  flex-direction: row;
+  justify-content: center;
+`;
+
+const ToggleText = styled.Text`
+  font-size: 16px;
+  margin: 10px;
+`;
+
+const Header = styled.View`
+  padding-top: 20px;
+  margin-bottom: 10px;
+  align-items: center;
+`;
+
+const HeaderText = styled.Text`
+  font-size: 24px;
+  font-weight: bold;
+`;
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    section: {
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-    },
-    sectionTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center'
-    },
-    itemTitle: {
-        fontSize: 18,
-        fontWeight: 'bold'
-    },
-    noDonations: {
-        fontSize: 20,
-        textAlign: 'center',
-        textAlignVertical: 'center'
-    },
-    item: {
-        flexDirection: 'row',
-        backgroundColor: '#f0f0f0',
-        padding: 10,
-        marginVertical: 5,
-        alignItems: 'center',
-    },
-    itemImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginRight: 10,
-    },
-    itemTextContainer: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    itemStatus: {
-        fontSize: 14,
-        color: 'white',
-        padding: 5,
-        borderRadius: 5,
-        position: 'absolute',
-        right: 10,
-    },
-    aceita: {
-        backgroundColor: 'green',
-    },
-    recusada: {
-        backgroundColor: 'red',
-    },
-    pendente: {
-        backgroundColor: 'blue',
-    },
+  container: {
+    flex: 1,
+  },
+  section: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  itemTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  noDonations: {
+    fontSize: 20,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+  },
+  item: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    marginVertical: 5,
+    alignItems: 'center',
+  },
+  itemImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  itemTextContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  itemStatus: {
+    fontSize: 14,
+    color: 'white',
+    padding: 5,
+    borderRadius: 5,
+    position: 'absolute',
+    right: 10,
+  },
+  aceita: {
+    backgroundColor: 'green',
+  },
+  recusada: {
+    backgroundColor: 'red',
+  },
+  pendente: {
+    backgroundColor: 'blue',
+  },
 });
 
 export default Solicitations;
