@@ -309,22 +309,22 @@ const Map = styled(MapView)`
 const MarkerImage = styled.Image`
   width: 70px;
   height: 70px;
-  border-radius: 2px;
-  background-color: red;
+  border-radius: 20px;
+  background-color: transparent;
   border: 2px solid white;
 `;
 
 const PinShaft = styled(View)`
-  width: 0;
-  height: 0;
-  borderleftwidth: 10px;
-  borderrightwidth: 10px;
-  borderbottomwidth: 20px;
-  backgroundcolor: transparent;
-  borderleftcolor: transparent;
-  borderrightcolor: transparent;
-  borderbottomcolor: black;
-  alignself: center;
+  width: 0; 
+  height: 0; 
+  borderLeftWidth: 10px; 
+  borderRightWidth: 10px; 
+  borderBottomWidth: 20px;
+  backgroundColor: transparent;
+  borderLeftColor: transparent; 
+  borderRightColor: transparent; 
+  borderBottomColor: black;
+  alignSelf: center;
   transform: rotate(180deg);
 `;
 
