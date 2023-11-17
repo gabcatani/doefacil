@@ -153,7 +153,7 @@ const ItemDetails = ({ route }: any) => {
           >
             {mapReady && (
               <Marker coordinate={mapRegion}>
-                <MarkerImage source={{ uri: item.image }} />
+                <MarkerImage source={{ uri: item.imageUrl }} />
                 <Callout>
                   <CalloutTitle>{item.itemName}</CalloutTitle>
                 </Callout>

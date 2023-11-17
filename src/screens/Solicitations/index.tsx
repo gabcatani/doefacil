@@ -10,7 +10,6 @@ import {
   type TextStyle,
 } from 'react-native';
 import styled from 'styled-components/native';
-import { boolean } from 'yup';
 import { storageLocal } from '../../../App';
 
 interface ISolicitationItem {
@@ -98,7 +97,7 @@ const Solicitations = () => {
                 const donation = donationDoc.data() as IDonation;
                 return {
                   id: solicitation.id,
-                  image: donation.image,
+                  image: donation.imageUrl,
                   title: donation.itemName,
                   status: getStatus(solicitationData).toUpperCase(),
                 };
@@ -130,7 +129,7 @@ const Solicitations = () => {
               if (donationDoc.exists) {
                 const donation = donationDoc.data() as IDonation;
                 return {
-                  image: donation.image,
+                  image: donation.imageUrl,
                   title: donation.itemName,
                   status: getStatus(solicitationData).toUpperCase(),
                   id: solicitation.id,
@@ -147,6 +146,9 @@ const Solicitations = () => {
         });
       });
   }, [isFocused]);
+
+  console.log('request', donationRequests);
+  console.log('myDonations', myDonations);
 
   return (
     <Screen>
