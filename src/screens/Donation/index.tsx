@@ -1,4 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { Picker } from '@react-native-picker/picker';
@@ -81,7 +82,6 @@ const DonationForm = () => {
     }
   }, [location]);
 
-  console.log('USESTATE', addresss);
   const [currentStep, setCurrentStep] = useState(1);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -138,8 +138,6 @@ const DonationForm = () => {
   });
 
   const onSubmit = async (data: IFormInput) => {
-    console.log('data', data);
-
     const { itemName, itemCategory, description, usageTime } = data;
 
     if (currentStep < 3) {
@@ -150,22 +148,13 @@ const DonationForm = () => {
     const imageRef = storage().ref(`images/${data.itemName}`);
     await imageRef.putFile(imageUri ?? '');
     const imageUrl = await imageRef.getDownloadURL();
-
-    // if (getStoredLocation()) {
-    //   useToast({
-    //     message: 'Localização não disponível.',
-    //     type: TOASTTYPE.ERROR,
-    //   });
-    //   return;
-    // }
-
-    useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
+    const donatorId = auth().currentUser?.uid;
 
     try {
       await firestore()
         .collection('donations')
         .add({
-          donatorId: 'mock-donator-id-123',
+          donatorId,
           itemName,
           itemCategory,
           usageTime,
@@ -180,7 +169,7 @@ const DonationForm = () => {
       reset();
       setImageUri(null);
       useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
-      navigation.navigate('ItemLIst');
+      navigation.navigate('Maps');
     } catch (error) {
       console.error('Erro ao adicionar doação:', error);
       useToast({ message: 'Tente Novamente', type: TOASTTYPE.ERROR });
@@ -191,7 +180,7 @@ const DonationForm = () => {
     return (
       <InputContainer>
         <StyledTextInput {...props} />
-        <AnchorSimple color="gray" weight="bold" size={24} />
+        {icon}
       </InputContainer>
     );
   };
@@ -289,8 +278,8 @@ const DonationForm = () => {
                 name="description"
                 defaultValue=""
               />
-              <StyledButton onPress={nextStep} backgroundColor="blue">
-                <ButtonText>Próximo</ButtonText>
+              <StyledButton onPress={nextStep} borderColor="blue">
+                <ButtonText color="blue">Próximo</ButtonText>
               </StyledButton>
             </>
           </React.Fragment>
@@ -365,8 +354,8 @@ const DonationForm = () => {
               defaultValue={addresss.number}
             />
 
-            <StyledButton onPress={nextStep} backgroundColor="blue">
-              <ButtonText>Próximo</ButtonText>
+            <StyledButton onPress={nextStep} borderColor="blue">
+              <ButtonText color="blue">Próximo</ButtonText>
             </StyledButton>
           </React.Fragment>
         );
@@ -381,34 +370,27 @@ const DonationForm = () => {
             </ButtonContainer>
 
             {!imageUri && (
-              <StyledButton onPress={chooseImage} backgroundColor="blue">
-                <ButtonText>Escolher imagem</ButtonText>
-              </StyledButton>
+              <UploadArea onPress={chooseImage}>
+                <InstructionText>Selecione uma foto do item</InstructionText>
+              </UploadArea>
             )}
 
-            {imageUri && <ImagePreview source={{ uri: imageUri }} />}
+            {imageUri && (
+              <UploadArea onPress={chooseImage}>
+                <ImagePreview source={{ uri: imageUri }} />
+              </UploadArea>
+            )}
 
             {loading ? (
               <ActivityIndicator />
             ) : (
               <ButtonContainer>
                 <StyledButton
-                  onPress={() => {
-                    console.log('remove');
-                  }}
-                  disabled={!imageUri}
-                  backgroundColor={!imageUri ? 'white' : 'red'}
-                >
-                  <ButtonText color={!imageUri ? 'black' : 'white'}>
-                    Alterar Imagem
-                  </ButtonText>
-                </StyledButton>
-                <StyledButton
                   onPress={handleSubmit(onSubmit)}
                   disabled={!imageUri}
-                  backgroundColor={!imageUri ? 'white' : 'coral'}
+                  borderColor={!imageUri ? 'white' : 'coral'}
                 >
-                  <ButtonText color={!imageUri ? 'black' : 'white'}>
+                  <ButtonText color={!imageUri ? 'gray' : 'coral'}>
                     Doar
                   </ButtonText>
                 </StyledButton>
@@ -478,8 +460,8 @@ const TextInput = styled.TextInput`
 `;
 
 const ImagePreview = styled.Image`
-  width: 200px;
-  height: 200px;
+  width: 400px;
+  height: 400px;
   margin: 10px 0px;
   border-radius: 10px;
 `;
@@ -512,14 +494,15 @@ const ButtonContainer = styled.View`
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  /* background-color: red; */
 `;
 
 const StyledButton = styled.TouchableOpacity`
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
-  background-color: ${(props) => props.backgroundColor || 'red'};
+  background-color: ${(props) => props.backgroundColor || 'white'};
+  border-color: ${(props) => props.borderColor || 'white'};
+  border-width: 2px;
   border-radius: ${(props) => props.borderRadius || 20}px;
   padding: ${(props) => props.padding || 10}px;
   margin: ${(props) => props.margin || 10}px;
@@ -527,7 +510,7 @@ const StyledButton = styled.TouchableOpacity`
 
 const ButtonText = styled.Text`
   font-size: 24px;
-  color: ${(props) => props.color || 'white'};
+  color: ${(props) => props.color || 'black'};
   text-align: center;
 `;
 
@@ -548,4 +531,23 @@ const PaginationDot = styled.View`
   border-radius: 5px;
   background-color: gray;
   margin-horizontal: 8px;
+`;
+
+const UploadArea = styled.TouchableOpacity`
+  width: 400px;
+  height: 400px;
+  border-style: dashed;
+  border-width: 2px;
+  border-color: #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const InstructionText = styled.Text`
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 5px;
+  text-align: center;
 `;

@@ -12,6 +12,7 @@ import Donation from '../screens/Donation';
 import Home from '../screens/Infomations';
 import ItemsList from '../screens/ItemsList';
 import Solicitations from '../screens/Solicitations';
+import Test from '../screens/Test';
 
 const Tab = createBottomTabNavigator();
 
@@ -46,6 +47,16 @@ export default function TabRoutes() {
         component={ItemsList}
         options={{
           tabBarLabel: 'Mapa',
+          tabBarIcon: ({ color, size }) => (
+            <MapTrifold color="teal" weight="duotone" size={32} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Test"
+        component={Test}
+        options={{
+          tabBarLabel: 'Teste',
           tabBarIcon: ({ color, size }) => (
             <MapTrifold color="teal" weight="duotone" size={32} />
           ),
