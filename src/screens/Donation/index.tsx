@@ -4,7 +4,18 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
-import { AnchorSimple, CaretLeft } from 'phosphor-react-native';
+import {
+  UploadSimple,
+  CaretLeft,
+  Calendar,
+  Tag,
+  CaretRight,
+  CheckSquareOffset,
+  Buildings,
+  ListNumbers,
+  Truck,
+  TrafficSignal,
+} from 'phosphor-react-native';
 import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
@@ -201,7 +212,7 @@ const DonationForm = () => {
                     onChangeText={onChange}
                     value={value}
                     placeholder="Nome do item"
-                    icon={<AnchorSimple color="gray" weight="bold" size={24} />}
+                    icon={<Tag color="gray" weight="bold" size={24} />}
                   />
                 )}
                 name="itemName"
@@ -254,7 +265,7 @@ const DonationForm = () => {
                     }}
                     value={value}
                     placeholder="Tempo de Uso"
-                    icon={<AnchorSimple color="gray" weight="bold" size={24} />}
+                    icon={<Calendar color="gray" weight="bold" size={24} />}
                   />
                 )}
                 name="usageTime"
@@ -278,8 +289,9 @@ const DonationForm = () => {
                 name="description"
                 defaultValue=""
               />
-              <StyledButton onPress={nextStep} borderColor="blue">
-                <ButtonText color="blue">Próximo</ButtonText>
+              <StyledButton onPress={nextStep}>
+                <ButtonText>Próximo</ButtonText>
+                <CaretRight color="white" weight="bold" size={24} />
               </StyledButton>
             </>
           </React.Fragment>
@@ -287,12 +299,14 @@ const DonationForm = () => {
       case 2:
         return (
           <React.Fragment key="step2">
-            <ButtonContainer>
-              <StyledButton onPress={prevStep} backgroundColor="white">
-                <CaretLeft color="gray" weight="bold" size={32} />
-              </StyledButton>
+            <HeaderContainer>
+              <ChevronContainer>
+                <StyledButton onPress={prevStep} backgroundColor="white">
+                  <CaretLeft color="gray" weight="bold" size={32} />
+                </StyledButton>
+              </ChevronContainer>
               <ButtonText color="black">Endereço</ButtonText>
-            </ButtonContainer>
+            </HeaderContainer>
 
             <Controller
               control={control}
@@ -302,7 +316,7 @@ const DonationForm = () => {
                   onChangeText={onChange}
                   value={value}
                   placeholder="Cidade"
-                  icon={<AnchorSimple color="gray" weight="bold" size={24} />}
+                  icon={<Buildings color="gray" weight="bold" size={24} />}
                 />
               )}
               name="city"
@@ -317,7 +331,7 @@ const DonationForm = () => {
                   onChangeText={onChange}
                   value={value}
                   placeholder="Bairro"
-                  icon={<AnchorSimple color="gray" weight="bold" size={24} />}
+                  icon={<TrafficSignal color="gray" weight="bold" size={24} />}
                 />
               )}
               name="neighborhood"
@@ -332,7 +346,7 @@ const DonationForm = () => {
                   onChangeText={onChange}
                   value={value}
                   placeholder="Rua"
-                  icon={<AnchorSimple color="gray" weight="bold" size={24} />}
+                  icon={<Truck color="gray" weight="bold" size={24} />}
                 />
               )}
               name="street"
@@ -347,31 +361,35 @@ const DonationForm = () => {
                   onChangeText={onChange}
                   value={value}
                   placeholder="Número"
-                  icon={<AnchorSimple color="gray" weight="bold" size={24} />}
+                  icon={<ListNumbers color="gray" weight="bold" size={24} />}
                 />
               )}
               name="number"
               defaultValue={addresss.number}
             />
 
-            <StyledButton onPress={nextStep} borderColor="blue">
-              <ButtonText color="blue">Próximo</ButtonText>
+            <StyledButton onPress={nextStep}>
+              <ButtonText>Próximo</ButtonText>
+              <CaretRight color="white" weight="bold" size={24} />
             </StyledButton>
           </React.Fragment>
         );
       case 3:
         return (
           <React.Fragment key="step3">
-            <ButtonContainer>
-              <StyledButton onPress={prevStep} backgroundColor="white">
-                <CaretLeft color="gray" weight="bold" size={32} />
-              </StyledButton>
+            <HeaderContainer>
+              <ChevronContainer>
+                <StyledButton onPress={prevStep} backgroundColor="white">
+                  <CaretLeft color="gray" weight="bold" size={32} />
+                </StyledButton>
+              </ChevronContainer>
               <ButtonText color="black">Imagem</ButtonText>
-            </ButtonContainer>
+            </HeaderContainer>
 
             {!imageUri && (
               <UploadArea onPress={chooseImage}>
                 <InstructionText>Selecione uma foto do item</InstructionText>
+                <UploadSimple color="gray" weight="bold" size={40} />
               </UploadArea>
             )}
 
@@ -384,17 +402,20 @@ const DonationForm = () => {
             {loading ? (
               <ActivityIndicator />
             ) : (
-              <ButtonContainer>
+              imageUri && (
                 <StyledButton
                   onPress={handleSubmit(onSubmit)}
                   disabled={!imageUri}
-                  borderColor={!imageUri ? 'white' : 'coral'}
                 >
-                  <ButtonText color={!imageUri ? 'gray' : 'coral'}>
-                    Doar
-                  </ButtonText>
+                  <ButtonText>Confirmar</ButtonText>
+                  <CheckSquareOffset
+                    color="white"
+                    weight="bold"
+                    size={24}
+                    style={{ marginLeft: 5 }}
+                  />
                 </StyledButton>
-              </ButtonContainer>
+              )
             )}
           </React.Fragment>
         );
@@ -410,7 +431,7 @@ const DonationForm = () => {
           <PaginationDot
             key={index}
             style={
-              currentStep === index + 1 ? { backgroundColor: 'blue' } : null
+              currentStep === index + 1 ? { backgroundColor: '#4A748C' } : null
             }
           />
         ))}
@@ -459,13 +480,6 @@ const TextInput = styled.TextInput`
   text-align-vertical: top;
 `;
 
-const ImagePreview = styled.Image`
-  width: 400px;
-  height: 400px;
-  margin: 10px 0px;
-  border-radius: 10px;
-`;
-
 const Title = styled.Text`
   color: black;
   font-size: 24px;
@@ -490,28 +504,32 @@ const StyledTextInput = styled.TextInput`
   padding: 10px 15px;
 `;
 
-const ButtonContainer = styled.View`
+const HeaderContainer = styled.View`
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  position: relative;
+  width: 100%;
+  margin-bottom: 40px;
+`;
+
+const ChevronContainer = styled.View`
+  position: absolute;
+  left: 1;
 `;
 
 const StyledButton = styled.TouchableOpacity`
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
-  background-color: ${(props) => props.backgroundColor || 'white'};
-  border-color: ${(props) => props.borderColor || 'white'};
-  border-width: 2px;
-  border-radius: ${(props) => props.borderRadius || 20}px;
-  padding: ${(props) => props.padding || 10}px;
-  margin: ${(props) => props.margin || 10}px;
+  background-color: ${(props) => props.backgroundColor || '#49888bc8'};
+  border-color: ${(props) => props.backgroundColor || '#49888bc8'};
+  padding: 10px;
+  border-radius: 10px;
 `;
 
 const ButtonText = styled.Text`
-  font-size: 24px;
-  color: ${(props) => props.color || 'black'};
-  text-align: center;
+  color: ${(props) => props.color || 'white'};
 `;
 
 const PaginationWrapper = styled.View`
@@ -534,15 +552,22 @@ const PaginationDot = styled.View`
 `;
 
 const UploadArea = styled.TouchableOpacity`
-  width: 400px;
-  height: 400px;
+  width: 90%;
+  height: 50%;
   border-style: dashed;
   border-width: 2px;
   border-color: #ccc;
   border-radius: 10px;
-  padding: 20px;
+  margin-bottom: 20px;
   align-items: center;
   justify-content: center;
+`;
+
+const ImagePreview = styled.Image`
+  width: 100%;
+  height: 100%;
+  margin: 10px 0px;
+  border-radius: 10px;
 `;
 
 const InstructionText = styled.Text`

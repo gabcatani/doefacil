@@ -88,15 +88,13 @@ const DonationScreen = (): any => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#FFFAF0', // Um laranja bem clarinho
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 8,
     padding: 20,
-    marginLeft: 12,
-    marginRight: 12,
-    width: Dimensions.get('window').width - 24,
+    margin: 20,
+    width: Dimensions.get('window').width - 40,
     justifyContent: 'center', // Isso garantirá que o conteúdo esteja distribuído uniformemente
     alignItems: 'center',
     minHeight: 500, // Ajuste a altura conforme necessário
@@ -135,7 +133,7 @@ const styles = StyleSheet.create({
   },
   paginationWrapper: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 40,
     left: 0,
     right: 0,
     justifyContent: 'center',
@@ -151,7 +149,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   paginationDotActive: {
-    backgroundColor: '#FFA500',
+    backgroundColor: '#4A8C79',
   },
 });
 
