@@ -12,7 +12,6 @@ import {
   Image,
 } from 'react-native';
 import { storageLocal } from '../../../App';
-import { type IDonation } from '../ItemMap/types';
 import * as S from './styles';
 
 const styles = StyleSheet.create({
@@ -361,7 +360,10 @@ const Solicitation = ({ route }) => {
       </S.Header>
       {!!solicitation && !!donation && (
         <View style={styles.header}>
-          <Image source={{ uri: donation?.image }} style={styles.itemImage} />
+          <Image
+            source={{ uri: donation?.imageUrl }}
+            style={styles.itemImage}
+          />
           <Text style={styles.tituloAnuncio}>{donation?.itemName}</Text>
           <Text style={[styles.status, getStatusStyle(status)]}>
             {getStatus(solicitation).toUpperCase()}
@@ -416,14 +418,22 @@ const Solicitation = ({ route }) => {
         </Text>
       )}
 
-      {status == 'pendente' && (
-        <Text style={styles.chatTitle}>
-          Sua doação ainda não foi aceita pelo doador. Converse com ele no chat
-          abaixo.
-        </Text>
-      )}
+      {status === 'pendente' &&
+        donation.donatorId !== storageLocal.getString('uid') && (
+          <Text style={styles.chatTitle}>
+            Sua doação ainda não foi aceita pelo doador. Converse com ele no
+            chat abaixo.
+          </Text>
+        )}
 
-      {status == 'recusada' && (
+      {status === 'pendente' &&
+        donation.donatorId === storageLocal.getString('uid') && (
+          <Text style={styles.chatTitle}>
+            Entre em contato com o solicitante pelo chat para combinar a doação.
+          </Text>
+        )}
+
+      {status === 'recusada' && (
         <Text style={styles.chatTitle}>
           {
             'Infelizmente sua solicitação de doação não foi aceita pelo doador :('
@@ -431,7 +441,7 @@ const Solicitation = ({ route }) => {
         </Text>
       )}
 
-      {status == 'aceita' && (
+      {status === 'aceita' && (
         <Text style={styles.chatTitle}>
           {
             'Obaaa! Sua solicitação foi aceita. Agora combine a entrega com o doador! :D'

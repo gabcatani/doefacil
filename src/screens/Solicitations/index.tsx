@@ -160,7 +160,7 @@ const Solicitations = () => {
         <ToggleText>Minhas solicitações</ToggleText>
       </ToggleButton>
       {showMyDonations && (
-        <View style={styles.section}>
+        <Section>
           {myDonations.map((donation, index) => (
             <TouchableOpacity
               key={index}
@@ -183,10 +183,10 @@ const Solicitations = () => {
               </View>
             </TouchableOpacity>
           ))}
-        </View>
+        </Section>
       )}
       {!showMyDonations && (
-        <View style={styles.section}>
+        <Section>
           {donationRequests.map((request, index) => (
             <TouchableOpacity
               key={index}
@@ -206,7 +206,7 @@ const Solicitations = () => {
               </View>
             </TouchableOpacity>
           ))}
-        </View>
+        </Section>
       )}
       {donationRequests.length === 0 && myDonations.length === 0 && (
         <EmptyScreen>
@@ -219,6 +219,12 @@ const Solicitations = () => {
 
 const Screen = styled.View`
   flex: 1;
+`;
+
+const Section = styled.View`
+  padding: 10px;
+  border-bottom-width: 1px;
+  border-bottom-color: '#ccc';
 `;
 
 const EmptyScreen = styled.View`

@@ -309,8 +309,8 @@ const Map = styled(MapView)`
 const MarkerImage = styled.Image`
   width: 70px;
   height: 70px;
-  border-radius: 2px;
-  background-color: red;
+  border-radius: 20px;
+  background-color: transparent;
   border: 2px solid white;
 `;
 
