@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
+import theme from '../../theme';
 
 interface ISolicitationItem {
   id: string;
@@ -271,6 +272,7 @@ const Header = styled.View`
 const HeaderText = styled.Text`
   font-size: 24px;
   font-weight: bold;
+  color: ${props => props.theme.colors.text};
 `;
 
 const ToggleContainer = styled.View`
@@ -311,6 +313,7 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: theme.colors.text
   },
   noDonations: {
     fontSize: 20,

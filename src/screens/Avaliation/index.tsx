@@ -6,6 +6,7 @@ import { ScrollView } from 'react-native';
 import styled from 'styled-components/native';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import theme from '../../theme';
 
 const questions = [
   {
@@ -151,6 +152,8 @@ const Avaliation = () => {
                   handleInputChange(questionIndex, text);
                 }}
                 placeholder="Digite sua resposta aqui"
+                placeholderTextColor={theme.colors.secondary}
+                style={{color: theme.colors.text}}
               />
             )}
           </QuestionContainer>

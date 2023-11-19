@@ -279,6 +279,7 @@ const Header = styled.View`
 const HeaderText = styled.Text`
   font-size: 24px;
   font-weight: bold;
+  color: ${props => props.theme.colors.text};
 `;
 
 const ToggleContainer = styled.View`
@@ -315,6 +316,7 @@ const CardTextContainer = styled.View`
   align-items: flex-start;
   padding: 10px;
   margin-left: 10px;
+  flexShrink: 1;
 `;
 
 const ImagemContainer = styled.View`
@@ -329,13 +331,16 @@ const ItemImage = styled.Image`
 `;
 
 const NameText = styled.Text`
-  font-size: 24px;
+  font-size: 20px;
   text-align: left;
+  color: ${props => props.theme.colors.text};
+  maxWidth: 100%;
 `;
 
 const CategoryText = styled.Text`
   font-size: 16px;
   text-align: left;
+  color: ${props => props.theme.colors.text};
 `;
 
 const Map = styled(MapView)`

@@ -260,6 +260,7 @@ const GoBackButton = styled.TouchableOpacity`
 const HeaderText = styled.Text`
   font-size: 24px;
   font-weight: bold;
+  color: ${props => props.theme.colors.text};
 `;
 
 const ImagemContainer = styled.View`
@@ -288,6 +289,7 @@ const BoldText = styled.Text`
 
 const NameText = styled.Text`
   font-size: 24px;
+  color: ${props => props.theme.colors.text};
 `;
 
 const MapContainer = styled.View`
@@ -324,7 +326,9 @@ const PinShaft = styled(View)`
 `;
 
 const CalloutTitle = styled.Text`
-  font-size: 24px;
+  font-size: 16px;
+  color: ${props => props.theme.colors.text};
+  width: 100px;
 `;
 
 // const ButtonContainer = styled.View`

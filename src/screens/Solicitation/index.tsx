@@ -13,11 +13,15 @@ import {
 } from 'react-native';
 import { storageLocal } from '../../../App';
 import * as S from './styles';
+import theme from '../../theme';
 
 const styles = StyleSheet.create({
   chatContainer: {
     flex: 1,
     padding: 10,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
   },
   itemImage: {
     width: 50,
@@ -35,7 +39,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginVertical: 5,
     maxWidth: '70%',
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-end'
   },
   outraMensagem: {
     backgroundColor: '#fff',
@@ -43,7 +47,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginVertical: 5,
     maxWidth: '70%',
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-start'
   },
   textInput: {
     flex: 1,
@@ -52,6 +56,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderRadius: 5,
     padding: 10,
+    color: theme.colors.text
   },
   header: {
     flexDirection: 'row',
@@ -66,10 +71,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
     padding: 10,
+    color: theme.colors.text
   },
   tituloAnuncio: {
     fontWeight: 'bold',
     fontSize: 18,
+    color: theme.colors.text
   },
   status: {
     marginTop: 5,
@@ -458,7 +465,7 @@ const Solicitation = ({ route }) => {
                 key={index}
                 style={msg.myText ? styles.minhaMensagem : styles.outraMensagem}
               >
-                <Text>{msg.text}</Text>
+                <Text style={{color: theme.colors.text}}>{msg.text}</Text>
                 <Text style={styles.messageDate}>
                   {msg.date.toLocaleDateString('pt-BR')}{' '}
                   {msg.date.toLocaleTimeString('pt-BR')}
@@ -472,6 +479,7 @@ const Solicitation = ({ route }) => {
               value={text}
               onChangeText={setText}
               placeholder="Digite uma mensagem"
+              placeholderTextColor={theme.colors.secondary}
             />
             <Button title="Enviar" onPress={sendMessage} />
           </View>

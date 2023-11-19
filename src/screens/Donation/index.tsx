@@ -34,6 +34,7 @@ import * as yup from 'yup';
 import useLocationStorage from '../../hooks/data/useLocationStorage';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import theme from '../../theme';
 
 interface IFormInput {
   itemName: string;
@@ -190,7 +191,7 @@ const DonationForm = () => {
   const IconTextInput = ({ icon, ...props }) => {
     return (
       <InputContainer>
-        <StyledTextInput {...props} />
+        <StyledTextInput placeholderTextColor={theme.colors.secondary}  {...props} />
         {icon}
       </InputContainer>
     );
@@ -283,7 +284,8 @@ const DonationForm = () => {
                       onChange(value);
                     }}
                     value={value}
-                    placeholder="Observações"
+                    placeholder="Observações e detalhes da doação"
+                    placeholderTextColor={theme.colors.secondary}
                   />
                 )}
                 name="description"
@@ -462,7 +464,7 @@ export default DonationForm;
 
 const Screen = styled.View`
   flex: 1;
-  background-color: white;
+  background-color: ${props => props.theme.colors.background};
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -476,8 +478,8 @@ const TextInput = styled.TextInput`
   padding: 20px 15px;
   border-radius: 8px;
   font-size: 16px;
-  color: black;
   text-align-vertical: top;
+  color: ${props => props.theme.colors.text};
 `;
 
 const Title = styled.Text`
@@ -502,6 +504,7 @@ const StyledTextInput = styled.TextInput`
   flex: 1;
   font-size: 16px;
   padding: 10px 15px;
+  color: ${props => props.theme.colors.text};
 `;
 
 const HeaderContainer = styled.View`
