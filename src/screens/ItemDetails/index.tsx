@@ -14,6 +14,7 @@ import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import { View } from 'react-native';
 
 interface IParamsItem {
   item: IDonation;
@@ -158,6 +159,7 @@ const ItemDetails = ({ route }: any) => {
               <Marker coordinate={mapRegion}>
                 <ImageContainer>
                   <MarkerImage source={{ uri: item.imageUrl }} />
+                  <PinShaft />
                 </ImageContainer>
                 <Callout>
                   <CalloutTitle>{item.itemName}</CalloutTitle>
@@ -299,8 +301,26 @@ const Map = styled(MapView)`
 const ImageContainer = styled.View``;
 
 const MarkerImage = styled.Image`
-  width: 100px;
-  height: 100px;
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  background-color: transparent;
+  border: 2px solid white;
+`;
+
+const PinShaft = styled(View)`
+  width: 0;
+  height: 0;
+  border-left-width: 10px;
+  border-left-width: 10px;
+  border-right-width: 10px;
+  border-bottom-width: 20px;
+  background-color: transparent;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: black;
+  align-self: center;
+  transform: rotate(180deg);
 `;
 
 const CalloutTitle = styled.Text`

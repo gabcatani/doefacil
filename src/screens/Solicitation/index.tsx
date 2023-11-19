@@ -419,7 +419,7 @@ const Solicitation = ({ route }) => {
       )}
 
       {status === 'pendente' &&
-        donation.donatorId !== storageLocal.getString('uid') && (
+        donation?.donatorId !== storageLocal.getString('uid') && (
           <Text style={styles.chatTitle}>
             Sua doação ainda não foi aceita pelo doador. Converse com ele no
             chat abaixo.
@@ -427,7 +427,7 @@ const Solicitation = ({ route }) => {
         )}
 
       {status === 'pendente' &&
-        donation.donatorId === storageLocal.getString('uid') && (
+        donation?.donatorId === storageLocal.getString('uid') && (
           <Text style={styles.chatTitle}>
             Entre em contato com o solicitante pelo chat para combinar a doação.
           </Text>
