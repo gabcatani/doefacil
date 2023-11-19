@@ -27,10 +27,7 @@ const Solicitations = () => {
   const [showMyDonations, setShowMyDonations] = useState<boolean>(true);
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
-
-  const handleToggle = () => {
-    setShowMyDonations((prevState) => !prevState);
-  };
+  const [activeOption, setActiveOption] = useState('doacoes');
 
   const handleItemPress = useCallback(
     (solicitationId: string) => {
@@ -153,12 +150,28 @@ const Solicitations = () => {
   return (
     <Screen>
       <Header>
-        <HeaderText>Doações Disponíveis</HeaderText>
+        <HeaderText>Doações e solicitações</HeaderText>
       </Header>
-      <ToggleButton onPress={handleToggle}>
-        <ToggleText>Minhas doações</ToggleText>
-        <ToggleText>Minhas solicitações</ToggleText>
-      </ToggleButton>
+      <ToggleContainer>
+        <Option
+          active={activeOption === 'doacoes'}
+          onPress={() => {
+            setActiveOption('doacoes');
+            setShowMyDonations(true)
+          }}
+        >
+          <OptionText active={activeOption === 'doacoes'}>Minhas doações</OptionText>
+        </Option>
+        <Option
+          active={activeOption === 'solicitacoes'}
+          onPress={() => {
+            setActiveOption('solicitacoes');
+            setShowMyDonations(false)
+          }}
+        >
+          <OptionText active={activeOption === 'solicitacoes'}>Minhas solicitações</OptionText>
+        </Option>
+      </ToggleContainer>
       {showMyDonations && (
         <Section>
           {myDonations.map((donation, index) => (
@@ -257,6 +270,27 @@ const Header = styled.View`
 
 const HeaderText = styled.Text`
   font-size: 24px;
+  font-weight: bold;
+`;
+
+const ToggleContainer = styled.View`
+  flex-direction: row;
+`;
+
+const Option = styled.TouchableOpacity`
+  flex: 1;
+  margin: 0px 20px;
+  padding: 10px 30px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 20px;
+  background-color: ${(props) =>
+    props.active ? '#4A8C79' : 'transparent'};
+`;
+
+const OptionText = styled.Text`
+  color: ${(props) =>
+    props.active ? '#fff' : '#000'};
   font-weight: bold;
 `;
 

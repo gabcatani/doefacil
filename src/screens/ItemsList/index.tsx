@@ -200,7 +200,7 @@ const ItemsList = () => {
   return (
     <Screen>
       <Header>
-        <HeaderText>Doações Disponíveis</HeaderText>
+        <HeaderText>Doações disponíveis</HeaderText>
       </Header>
 
       <ToggleContainer>
