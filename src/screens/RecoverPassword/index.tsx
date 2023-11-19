@@ -1,137 +1,145 @@
-import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import * as S from './styles'
-import auth from '@react-native-firebase/auth';
-import {useToast} from '../../hooks/ui/useToast'
-import { TOASTTYPE } from '../../hooks/ui/useToast/types';
-import {validationSchema} from './validation'
-import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import auth from '@react-native-firebase/auth';
+import { useNavigation } from '@react-navigation/native';
+import { CaretLeft } from 'phosphor-react-native';
+import React, { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { ActivityIndicator } from 'react-native';
+import styled from 'styled-components/native';
+import * as yup from 'yup';
+import { useToast } from '../../hooks/ui/useToast';
+import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 
-const RecoverPassword = () => {
-  const [signIn, setSignIn] = useState(true)
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const navigation = useNavigation<any>()
+const validationSchema = yup.object({
+  email: yup
+    .string()
+    .email('Insira um email válido')
+    .required('Não pode ser vazio'),
+});
 
-  const handleSendRecoverEmail = () => {
-    auth()
-    .sendPasswordResetEmail(email)
-    .then(() => useToast({message: "Enviamos um email para você", type: TOASTTYPE.SUCCESS}))
-    .catch(() => useToast({message: "Ocorreu um error, tente novamente", type: TOASTTYPE.ERROR}))
-  }
+const RecoverPasswordScreen = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const navigation = useNavigation<any>();
 
   const {
     control,
     handleSubmit,
-    reset,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(validationSchema) });
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+  });
 
-  const onSubmit = (data: any) => {
-    console.log(data);
-    handleSendRecoverEmail()
-    reset()
+  const handleRecoverPassword = (email: string) => {
+    setIsLoading(true);
+    auth()
+      .sendPasswordResetEmail(email)
+      .then(() => {
+        useToast({
+          message: 'Verifique seu e-mail para redefinir sua senha',
+          type: TOASTTYPE.SUCCESS,
+        });
+        navigation.navigate('Login');
+      })
+      .catch(() => {
+        useToast({ message: 'Tente novamente!', type: TOASTTYPE.ERROR });
+      })
+      .finally(() => {
+        setIsLoading(false); // Desativa o indicador de carregamento
+      });
   };
 
+  const onSubmit = (data) => {
+    handleRecoverPassword(data.email);
+  };
 
   return (
-        // <View style={styles.container}>
-        // <Text style={styles.title}>Dados de acesso</Text>
-        // <TextInput
-        //   placeholder="Email"
-        //   value={email}
-        //   onChangeText={setEmail}
-        //   style={styles.input}
-        //   />
-        // <TouchableOpacity style={styles.loginButton} onPress={handleSendRecoverEmail}>
-        //   <Text style={styles.buttonText}>Enviar</Text>
-        // </TouchableOpacity>
-       
-  
-        // </View>
+    <Screen>
+      <HeaderContainer>
+        <HeaderButton
+          onPress={() => {
+            navigation.navigate('Login');
+          }}
+        >
+          <CaretLeft color="gray" weight="bold" size={32} />
+        </HeaderButton>
+        <TitleText>Recuperação de Senha</TitleText>
+      </HeaderContainer>
+      <Controller
+        control={control}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <StyledInput
+            placeholder="Digite seu email"
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+          />
+        )}
+        name="email"
+        defaultValue=""
+      />
+      {errors.email && <ErrorText>{errors.email.message}</ErrorText>}
 
-        <S.Screen>
-        <Controller
-          control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <S.TextInput
-              onBlur={onBlur}
-              onChangeText={(value) => onChange(value)}
-              value={value}
-            />
-          )}
-          name="email"
-          defaultValue=""
-        />
-        {errors.email && <S.ErrorText>{errors.email.message}</S.ErrorText>}
-    
-        <S.ButtonSubmit title="Enviar" onPress={handleSubmit(onSubmit)} />
-
-        <View style={styles.signUpContainer}>
-          <Text style={styles.text1}>Não tem uma conta ?</Text>
-          <Text style={styles.text2} onPress={() =>  navigation.navigate('Login')}>Cadastre-se</Text>
-        </View>
-      
-      </S.Screen>
+      <StyledButton onPress={handleSubmit(onSubmit)} disabled={isLoading}>
+        {isLoading ? (
+          <ActivityIndicator size="small" color="blue" />
+        ) : (
+          <ButtonText>Enviar</ButtonText>
+        )}
+      </StyledButton>
+    </Screen>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#000',
-  },
-  input: {
-    width: '80%',
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    backgroundColor: '#D3D3D3',
-  },
-  createAccountText: {
-    width: "80%",
-    alignSelf: "flex-end",
-    fontSize: 10,
-    color: '#000',
-    marginBottom: 10,
-  },
-  loginButton: {
-    backgroundColor: '#4287f5',
-    width: '80%',
-    height: 40,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  signUpContainer: {
-    flexDirection: 'row',
-    paddingTop: 8
-  },
-  text1: {
-    paddingRight: 8
-  },
-  text2: {
-    color: "orange"
-  }
-});
+const Screen = styled.View`
+  flex: 1;
+  background-color: white;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
 
-export default RecoverPassword;
+const HeaderContainer = styled.View`
+  flex-direction: row;
+`;
+
+const HeaderButton = styled.TouchableOpacity``;
+
+const TitleText = styled.Text`
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 32px;
+`;
+
+const StyledInput = styled.TextInput`
+  width: 80%;
+  height: 50px;
+  border: 1px solid #ccc;
+  margin-bottom: 16px;
+  padding: 10px;
+  border-radius: 8px;
+`;
+
+const ErrorText = styled.Text`
+  color: red;
+  font-size: 12px;
+  margin-bottom: 8px;
+`;
+
+const StyledButton = styled.TouchableOpacity`
+  background-color: ${({ disabled }) => (disabled ? 'white' : '#4287f5')};
+  width: 80%;
+  height: 5%;
+  min-height: 40px;
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+`;
+
+const ButtonText = styled.Text`
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+`;
+
+export default RecoverPasswordScreen;

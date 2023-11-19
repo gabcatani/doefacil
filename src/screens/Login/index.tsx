@@ -8,11 +8,10 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { MMKV } from 'react-native-mmkv';
+import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
-import * as S from './styles';
 
 const LoginScreen = () => {
   const [signIn, setSignIn] = useState(true);
@@ -53,7 +52,7 @@ const LoginScreen = () => {
   };
 
   return signIn ? (
-    <S.Container>
+    <Container>
       <Text style={styles.title}>Dados de acesso</Text>
       <TextInput
         placeholder="Email"
@@ -86,7 +85,7 @@ const LoginScreen = () => {
           Cadastre-se
         </Text>
       </View>
-    </S.Container>
+    </Container>
   ) : (
     <View style={styles.container}>
       <Text style={styles.title}>Cadastre-se</Text>
@@ -184,5 +183,12 @@ const styles = StyleSheet.create({
     color: 'orange',
   },
 });
+
+const Container = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+`;
 
 export default LoginScreen;
