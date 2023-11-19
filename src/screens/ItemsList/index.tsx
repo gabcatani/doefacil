@@ -1,6 +1,7 @@
 import Geolocation from '@react-native-community/geolocation';
 import firestore from '@react-native-firebase/firestore';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { Ruler, Cube } from 'phosphor-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
@@ -40,6 +41,7 @@ interface IDonation {
 const ItemsList = () => {
   const [donations, setDonations] = useState<IDonation[] | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [activeOption, setActiveOption] = useState('list');
   const [mapReady, setMapReady] = useState(false);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
 
@@ -47,10 +49,6 @@ const ItemsList = () => {
 
   const storage = new MMKV();
   const navigation = useNavigation<any>();
-
-  const handleToggle = () => {
-    setShowMap((prevState) => !prevState);
-  };
 
   const calculateDistance = (item: IDonation) => {
     if (!currentRegion || !item.coordinates) return;
@@ -69,7 +67,7 @@ const ItemsList = () => {
         Math.sin(dLong / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distância em metros
+    const distance = R * c;
 
     if (distance < 1000) {
       return distance.toFixed(0) + ' Metros';
@@ -79,7 +77,7 @@ const ItemsList = () => {
     }
   };
 
-  const handleItemPress = useCallback(
+  const navigationToDetails = useCallback(
     (item: IDonation) => {
       navigation.navigate('ItemDetails', { item });
     },
@@ -152,7 +150,7 @@ const ItemsList = () => {
     ({ item, index }: { item: IDonation; index: number }) => (
       <TouchableOpacity
         onPress={() => {
-          handleItemPress(item);
+          navigationToDetails(item);
         }}
       >
         <Card key={index}>
@@ -160,8 +158,13 @@ const ItemsList = () => {
             <ItemImage source={{ uri: item.imageUrl }} />
           </ImagemContainer>
           <CardTextContainer>
-            <NameText>{item.itemName}</NameText>
+            <NameText>
+              <Cube color="gray" weight="bold" size={20} />
+              {item.itemName}
+            </NameText>
+
             <CategoryText numberOfLines={1} ellipsizeMode="tail">
+              <Ruler color="gray" weight="bold" size={15} />
               {calculateDistance(item)}
             </CategoryText>
           </CardTextContainer>
@@ -184,7 +187,11 @@ const ItemsList = () => {
         <MarkerImage source={{ uri: item.imageUrl }} />
         <PinShaft />
       </View>
-      <Callout>
+      <Callout
+        onPress={() => {
+          navigationToDetails(item);
+        }}
+      >
         <CalloutTitle>{item.itemName}</CalloutTitle>
       </Callout>
     </Marker>
@@ -195,10 +202,28 @@ const ItemsList = () => {
       <Header>
         <HeaderText>Doações Disponíveis</HeaderText>
       </Header>
-      <ToggleButton onPress={handleToggle}>
-        <ToggleText>Lista</ToggleText>
-        <ToggleText>Mapa</ToggleText>
-      </ToggleButton>
+
+      <ToggleContainer>
+        <Option
+          active={activeOption === 'list'}
+          onPress={() => {
+            setActiveOption('list');
+            setShowMap(false);
+          }}
+        >
+          <OptionText active={activeOption === 'list'}>Lista</OptionText>
+        </Option>
+        <Option
+          active={activeOption === 'mapa'}
+          onPress={() => {
+            setActiveOption('mapa');
+            setShowMap(true);
+          }}
+        >
+          <OptionText active={activeOption === 'mapa'}>Mapa</OptionText>
+        </Option>
+      </ToggleContainer>
+
       {!showMap ? (
         donations ? (
           <FlatList
@@ -256,6 +281,27 @@ const HeaderText = styled.Text`
   font-weight: bold;
 `;
 
+const ToggleContainer = styled.View`
+  flex-direction: row;
+`;
+
+const Option = styled.TouchableOpacity`
+  flex: 1;
+  margin: 0px 20px;
+  padding: 10px 30px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 20px;
+  background-color: ${(props) =>
+    props.active ? '#4A8C79' : 'transparent'}; /* Cor de fundo ativa ajustada */
+`;
+
+const OptionText = styled.Text`
+  color: ${(props) =>
+    props.active ? '#fff' : '#000'}; /* Cores do texto ajustadas */
+  font-weight: bold;
+`;
+
 const Card = styled.View`
   flex-direction: row;
   padding: 10px;
@@ -284,22 +330,12 @@ const ItemImage = styled.Image`
 
 const NameText = styled.Text`
   font-size: 24px;
-  textalign: left;
+  text-align: left;
 `;
 
 const CategoryText = styled.Text`
   font-size: 16px;
-  textalign: left;
-`;
-
-const ToggleButton = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: center;
-`;
-
-const ToggleText = styled.Text`
-  font-size: 16px;
-  margin: 10px;
+  text-align: left;
 `;
 
 const Map = styled(MapView)`
@@ -317,14 +353,15 @@ const MarkerImage = styled.Image`
 const PinShaft = styled(View)`
   width: 0;
   height: 0;
-  borderleftwidth: 10px;
-  borderrightwidth: 10px;
-  borderbottomwidth: 20px;
-  backgroundcolor: transparent;
-  borderleftcolor: transparent;
-  borderrightcolor: transparent;
-  borderbottomcolor: black;
-  alignself: center;
+  border-left-width: 10px;
+  border-left-width: 10px;
+  border-right-width: 10px;
+  border-bottom-width: 20px;
+  background-color: transparent;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: black;
+  align-self: center;
   transform: rotate(180deg);
 `;
 

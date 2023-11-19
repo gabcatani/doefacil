@@ -1,8 +1,14 @@
 import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-import { CaretLeft, GlobeHemisphereWest } from 'phosphor-react-native';
+import {
+  CaretLeft,
+  GlobeHemisphereWest,
+  MapPin,
+  SpinnerGap,
+  UserList,
+  Trash,
+} from 'phosphor-react-native';
 import React, { useEffect, useState } from 'react';
-import { View, Dimensions } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
@@ -31,8 +37,6 @@ interface IDonation {
   usageTime: string;
 }
 
-const screenDimensions = Dimensions.get('window');
-
 const ItemDetails = ({ route }: any) => {
   const { item }: IParamsItem = route.params;
   const [showMap, setShowMap] = useState(false);
@@ -41,7 +45,6 @@ const ItemDetails = ({ route }: any) => {
   const [isMyDonation, setIsMyDonation] = useState(true);
 
   const navigation = useNavigation();
-  const screenDimensions = Dimensions.get('window');
 
   const goBack = () => {
     navigation.goBack();
@@ -116,7 +119,7 @@ const ItemDetails = ({ route }: any) => {
     item.addresss.city;
 
   return (
-    <Screen showsVerticalScrollIndicator={false}>
+    <Screen>
       <Header>
         <GoBackButton onPress={goBack}>
           <CaretLeft color="gray" weight="bold" size={32} />
@@ -144,7 +147,7 @@ const ItemDetails = ({ route }: any) => {
           </CardTextContainer>
         </>
       ) : (
-        <MapContainer screenDimensions={screenDimensions}>
+        <MapContainer>
           <Map
             initialRegion={mapRegion}
             onMapReady={() => {
@@ -153,7 +156,9 @@ const ItemDetails = ({ route }: any) => {
           >
             {mapReady && (
               <Marker coordinate={mapRegion}>
-                <MarkerImage source={{ uri: item.imageUrl }} />
+                <ImageContainer>
+                  <MarkerImage source={{ uri: item.imageUrl }} />
+                </ImageContainer>
                 <Callout>
                   <CalloutTitle>{item.itemName}</CalloutTitle>
                 </Callout>
@@ -162,16 +167,27 @@ const ItemDetails = ({ route }: any) => {
           </Map>
         </MapContainer>
       )}
-      <ButtonContainer>
-        <StyledButton onPress={handleToggle} backgroundColor="orange">
-          <ButtonText color="white">{!showMap ? 'Mapa' : 'Item'}</ButtonText>
-          <GlobeHemisphereWest
-            color="gray"
-            weight="bold"
-            size={32}
-            style={{ marginLeft: 10 }}
-          />
+
+      <ButtonContainerMap>
+        <StyledButton onPress={handleToggle} backgroundColor="#4A748C">
+          <ButtonText color="white">{!showMap ? 'Mapa' : 'Dados'}</ButtonText>
+          {!showMap ? (
+            <MapPin
+              color="white"
+              weight="bold"
+              size={30}
+              style={{ marginLeft: 10 }}
+            />
+          ) : (
+            <UserList
+              color="white"
+              weight="bold"
+              size={30}
+              style={{ marginLeft: 10 }}
+            />
+          )}
         </StyledButton>
+
         {!isMyDonation &&
           (!solicitado ? (
             <StyledButton
@@ -182,46 +198,48 @@ const ItemDetails = ({ route }: any) => {
             >
               <ButtonText color="white">Solicitar</ButtonText>
               <GlobeHemisphereWest
-                color="gray"
+                color="white"
                 weight="bold"
-                size={32}
+                size={30}
                 style={{ marginLeft: 10 }}
               />
             </StyledButton>
           ) : (
             <StyledButton backgroundColor="white">
-              <ButtonText color="gray">Solicitada</ButtonText>
-              <GlobeHemisphereWest
+              <ButtonText color="gray">Solicitado</ButtonText>
+              <SpinnerGap
                 color="gray"
                 weight="bold"
-                size={32}
+                size={30}
                 style={{ marginLeft: 10 }}
               />
             </StyledButton>
           ))}
+
         {isMyDonation && (
           <StyledButton
             onPress={async () => {
               await handleDelete(item);
             }}
+            backgroundColor="#c13c3f"
           >
-            <ButtonText color="white">Deletar anúncio</ButtonText>
-            <GlobeHemisphereWest
-              color="gray"
+            <ButtonText>Excluir</ButtonText>
+            <Trash
+              color="white"
               weight="bold"
               size={32}
               style={{ marginLeft: 10 }}
             />
           </StyledButton>
         )}
-      </ButtonContainer>
+      </ButtonContainerMap>
     </Screen>
   );
 };
 
 export default ItemDetails;
 
-const Screen = styled.ScrollView`
+const Screen = styled.View`
   flex: 1;
 `;
 
@@ -229,7 +247,7 @@ const Header = styled.View`
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
+  margin: 20px 0px;
 `;
 
 const GoBackButton = styled.TouchableOpacity`
@@ -272,37 +290,46 @@ const NameText = styled.Text`
 
 const MapContainer = styled.View`
   flex: 1;
-  height: ${(props) => props.screenDimensions.height - 160 || '1px'};
-  width: ${(props) => props.screenDimensions.width - 10 || '1px'};
-  margin: 20px;
 `;
 
 const Map = styled(MapView)`
   flex: 1;
 `;
 
+const ImageContainer = styled.View``;
+
 const MarkerImage = styled.Image`
-  width: 50px;
-  height: 50px;
+  width: 100px;
+  height: 100px;
 `;
 
 const CalloutTitle = styled.Text`
-  font-size: 16px;
+  font-size: 24px;
 `;
 
-const ButtonContainer = styled.View`
-  flex: 1;
+// const ButtonContainer = styled.View`
+//   flex-direction: row;
+//   justify-content: center;
+//   align-items: center;
+//   margin-bottom: 20px;
+// `;
+
+const ButtonContainerMap = styled.View`
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
   flex-direction: row;
   justify-content: center;
   align-items: center;
 `;
 
 const StyledButton = styled.TouchableOpacity`
-  flex: 1;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  background-color: ${(props) => props.backgroundColor || 'red'};
+  background-color: ${(props) => props.backgroundColor || '#49888bc8'};
+  border-color: ${(props) => props.backgroundColor || '#49888bc8'};
   border-radius: 10px;
   padding: 10px;
   margin: 10px;
@@ -310,6 +337,5 @@ const StyledButton = styled.TouchableOpacity`
 
 const ButtonText = styled.Text`
   font-size: 24px;
-  color: ${(props) => props.color || 'black'};
-  text-align: center;
+  color: ${(props) => props.color || 'white'};
 `;

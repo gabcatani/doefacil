@@ -1,15 +1,14 @@
+import { useNavigation } from '@react-navigation/native';
+import LottieView from 'lottie-react-native';
 import React from 'react';
 import styled from 'styled-components/native';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
-import LottieView from 'lottie-react-native';
-import { useNavigation } from '@react-navigation/native';
 
 const CompletionScreen = () => {
-    const navigation = useNavigation<any>()
+  const navigation = useNavigation<any>();
 
-    const handleGoFinish = () => {
-        navigation.navigate('Maps')
-    }
+  const handleGoFinish = () => {
+    navigation.navigate('Maps');
+  };
 
   return (
     <ScreenContainer>
@@ -19,7 +18,7 @@ const CompletionScreen = () => {
           autoPlay
           loop
           style={{ width: 400, height: 400 }}
-          resizeMode='cover'
+          resizeMode="cover"
         />
         <CongratsText>Obrigado!</CongratsText>
         <ScoreText>100% Coletadas</ScoreText>
@@ -29,9 +28,9 @@ const CompletionScreen = () => {
         </DetailsText>
       </TopSection>
       <ShareText>Envie outro feedback:</ShareText>
-        <HomeButton onPress={handleGoFinish}>
-            <ButtonText>Finalizar</ButtonText>
-        </HomeButton>
+      <HomeButton onPress={handleGoFinish}>
+        <ButtonText>Finalizar</ButtonText>
+      </HomeButton>
     </ScreenContainer>
   );
 };
@@ -55,14 +54,14 @@ const TopSection = styled.View`
 const CongratsText = styled.Text`
   font-size: 24px;
   font-weight: bold;
-  color: #4CAF50;
+  color: #49888B;
   margin-bottom: 10px;
 `;
 
 const ScoreText = styled.Text`
   font-size: 48px;
   font-weight: bold;
-  color: #4CAF50;
+  color: #49888B;
   margin-bottom: 10px;
 `;
 
@@ -89,8 +88,8 @@ const ButtonText = styled.Text`
 `;
 
 const HomeButton = styled.TouchableOpacity`
-    margin: 10px;
-    padding: 10px;
-    border-radius: 8px;
-    background-color: #7d7dc2;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #6091f7;
 `;

@@ -111,19 +111,19 @@ const Avaliation = () => {
     }
   };
 
-  // const handleSignOut = () => {
-  //   auth()
-  //     .signOut()
-  //     .then(() => {
-  //       navigation.navigate('Login');
-  //     })
-  //     .then(() => {
-  //       useToast({ message: 'Você saiu do app', type: TOASTTYPE.SUCCESS });
-  //     })
-  //     .catch(() => {
-  //       useToast({ message: 'Tente novamente', type: TOASTTYPE.ERROR });
-  //     });
-  // };
+  const handleSignOut = () => {
+    auth()
+      .signOut()
+      .then(() => {
+        navigation.navigate('Login');
+      })
+      .then(() => {
+        useToast({ message: 'Você saiu do app', type: TOASTTYPE.SUCCESS });
+      })
+      .catch(() => {
+        useToast({ message: 'Tente novamente', type: TOASTTYPE.ERROR });
+      });
+  };
 
   return (
     <Screen>
@@ -188,7 +188,7 @@ const QuestionText = styled.Text`
 `;
 
 const OptionButton = styled.TouchableOpacity`
-  background-color: ${(props) => (props.selected ? 'blue' : 'gray')};
+  background-color: ${(props) => (props.selected ? '#6091F7' : 'gray')};
   padding: 10px;
   margin-bottom: 5px;
   border-radius: 5px;
@@ -201,7 +201,7 @@ const OptionText = styled.Text`
 
 const ButtonSubmit = styled.Button`
   margin-top: 20px;
-`;
+  `;
 
 const StyledTextInput = styled.TextInput`
   width: 100%;
