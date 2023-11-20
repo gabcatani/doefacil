@@ -1,6 +1,7 @@
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
+import { SignOut } from 'phosphor-react-native';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
 import styled from 'styled-components/native';
@@ -53,7 +54,7 @@ const questions = [
 const Avaliation = () => {
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [inputAnswers, setInputAnswers] = useState({});
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const handleSelectOption = (questionIndex, optionIndex) => {
     const newAnswers = [...answers];
@@ -128,7 +129,12 @@ const Avaliation = () => {
 
   return (
     <Screen>
-      <ScreenTitle>Avalie o APP!</ScreenTitle>
+      <HeaderContainer>
+        <ScreenTitle>Avalie o APP!</ScreenTitle>
+        <ExitButton onPress={handleSignOut}>
+          <SignOut color="black" weight="bold" size={32} />
+        </ExitButton>
+      </HeaderContainer>
       <ScrollView showsVerticalScrollIndicator={false}>
         {questions.map((question, questionIndex) => (
           <QuestionContainer key={questionIndex}>
@@ -153,13 +159,14 @@ const Avaliation = () => {
                 }}
                 placeholder="Digite sua resposta aqui"
                 placeholderTextColor={theme.colors.secondary}
-                style={{color: theme.colors.text}}
+                style={{ color: theme.colors.text }}
               />
             )}
           </QuestionContainer>
         ))}
-        <ButtonSubmit title="Enviar Respostas" onPress={handleSubmit} />
-        {/* <ButtonSubmit title='Sair' onPress={handleSignOut} /> */}
+        <ButtonSubmit onPress={handleSubmit}>
+          <ButtonText>Enviar Respostas</ButtonText>
+        </ButtonSubmit>
       </ScrollView>
     </Screen>
   );
@@ -167,11 +174,16 @@ const Avaliation = () => {
 
 export default Avaliation;
 
-// Styled Components
 const Screen = styled.View`
   flex: 1;
   background-color: white;
   padding: 20px;
+`;
+
+const HeaderContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
 `;
 
 const QuestionContainer = styled.View`
@@ -182,16 +194,18 @@ const ScreenTitle = styled.Text`
   font-size: 32px;
   margin-bottom: 20px;
   text-align: center;
+  color: black;
 `;
 
 const QuestionText = styled.Text`
-  font-size: 16px;
+  font-size: 18px;
   color: #333;
   margin-bottom: 10px;
 `;
 
 const OptionButton = styled.TouchableOpacity`
-  background-color: ${(props) => (props.selected ? '#6091F7' : 'gray')};
+  background-color: ${(props) =>
+    props.selected ? theme.colors.primary : 'gray'};
   padding: 10px;
   margin-bottom: 5px;
   border-radius: 5px;
@@ -202,9 +216,19 @@ const OptionText = styled.Text`
   font-size: 16px;
 `;
 
-const ButtonSubmit = styled.Button`
-  margin-top: 20px;
-  `;
+const ExitButton = styled.TouchableOpacity``;
+
+const ButtonSubmit = styled.TouchableOpacity`
+  background-color: ${theme.colors.primary};
+  border-radius: 10px;
+  padding: 15px;
+`;
+
+const ButtonText = styled.Text`
+  text-align: center;
+  font-size: 20px;
+  color: white;
+`;
 
 const StyledTextInput = styled.TextInput`
   width: 100%;

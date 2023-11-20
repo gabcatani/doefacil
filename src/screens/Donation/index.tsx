@@ -2,9 +2,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 import {
   UploadSimple,
   CaretLeft,
@@ -185,6 +185,7 @@ const DonationForm = () => {
   });
 
   const onSubmit = async (data: IFormInput) => {
+    setLoading(true);
     const {
       itemName,
       itemCategory,
@@ -206,29 +207,31 @@ const DonationForm = () => {
     const imageUrl = await imageRef.getDownloadURL();
     const donatorId = auth().currentUser?.uid;
 
-    let choseAddress
+    let choseAddress;
 
     if (activeOption === 'address') {
       const fullAddress = `${street}, ${number}, ${neighborhood}, ${city}`;
-      choseAddress = await getLatLng(fullAddress)
+      choseAddress = await getLatLng(fullAddress);
     } else {
-      choseAddress = coordinates
+      choseAddress = coordinates;
     }
 
     try {
-      await firestore().collection('donations').add({
-        donatorId,
-        itemName,
-        itemCategory,
-        usageTime,
-        description,
-        addresss,
-        coordinates: {
-          lat: choseAddress.lat,
-          lng: choseAddress.lng
-        },
-        imageUrl,
-      });
+      await firestore()
+        .collection('donations')
+        .add({
+          donatorId,
+          itemName,
+          itemCategory,
+          usageTime,
+          description,
+          addresss,
+          coordinates: {
+            lat: choseAddress.lat,
+            lng: choseAddress.lng,
+          },
+          imageUrl,
+        });
       reset();
       setImageUri(null);
       useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
@@ -237,7 +240,8 @@ const DonationForm = () => {
       console.error('Erro ao adicionar doação:', error);
       useToast({ message: 'Tente Novamente', type: TOASTTYPE.ERROR });
     } finally {
-      setCurrentStep(1)
+      setCurrentStep(1);
+      setLoading(false);
     }
   };
 
@@ -487,7 +491,7 @@ const DonationForm = () => {
             )}
 
             {loading ? (
-              <ActivityIndicator />
+              <ActivityIndicator size={'large'} style={{ marginTop: 15 }} />
             ) : (
               imageUri && (
                 <StyledButton

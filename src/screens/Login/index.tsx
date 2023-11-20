@@ -19,7 +19,7 @@ import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 import theme from '../../theme';
 
-const schema = yup.object().shape({
+const schemaCreate = yup.object().shape({
   fullName: yup.string().required('Nome completo é obrigatório'),
   email: yup.string().email('Email inválido').required('Email é obrigatório'),
   password: yup
@@ -32,18 +32,29 @@ const schema = yup.object().shape({
     .required('Confirmação de senha é obrigatória'),
 });
 
+const schemaLogin = yup.object().shape({
+  email: yup.string().email('Email inválido').required('Email é obrigatório'),
+  password: yup
+    .string()
+    .min(6, 'A senha deve ter pelo menos 6 caracteres')
+    .required('Senha é obrigatória'),
+});
+
 const LoginScreen = () => {
   const navigation = useNavigation<any>();
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors },
-    watch,
   } = useForm({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(isCreating ? schemaCreate : schemaLogin),
+    mode: 'onSubmit',
   });
+
   const [loading, setLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  console.log(isCreating);
 
   const handleLogin = async (data) => {
     console.log('data', data);
@@ -54,6 +65,9 @@ const LoginScreen = () => {
         storageLocal.set('uid', userCredential.user.uid);
       })
       .then(() => navigation.navigate('Auth'))
+      .then(() => {
+        reset();
+      })
       .then(() => {
         useToast({ message: 'Bem vindo!', type: TOASTTYPE.SUCCESS });
       })

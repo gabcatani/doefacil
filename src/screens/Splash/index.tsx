@@ -8,7 +8,7 @@ const CenteredView = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
-  background-color: #a3d4de;
+  background-color: #517d6c;
 `;
 
 const SplashScreen = () => {
