@@ -12,18 +12,29 @@ import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import firestore from '@react-native-firebase/firestore';
+import theme from '../../theme';
 
 const LoginScreen = () => {
   const [signIn, setSignIn] = useState(true);
   const navigation = useNavigation<any>();
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
 
   const handleCreateAccount = () => {
     auth()
       .createUserWithEmailAndPassword(email, password)
       .then((userCredentials) => {
+        storageLocal.set('uid', userCredentials.user.uid);
+
         navigation.navigate('Auth');
+
+        const additionalUserData = {
+          name
+        };
+
+        return firestore().collection('users').doc(userCredentials.user.uid).set(additionalUserData, { merge: true })
       })
       .catch((error) => {
         if (error.code === 'auth/email-already-in-use') {
@@ -59,6 +70,7 @@ const LoginScreen = () => {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        placeholderTextColor={theme.colors.secondary}
       />
 
       <TextInput
@@ -67,6 +79,7 @@ const LoginScreen = () => {
         onChangeText={setPassword}
         secureTextEntry
         style={styles.input}
+        placeholderTextColor={theme.colors.secondary}
       />
 
       <Text
@@ -89,8 +102,18 @@ const LoginScreen = () => {
   ) : (
     <View style={styles.container}>
       <Text style={styles.title}>Cadastre-se</Text>
+
+      <TextInput
+        placeholder="Nome completo"
+        placeholderTextColor={theme.colors.text}
+        value={name}
+        onChangeText={setName}
+        style={styles.input}
+      />
+
       <TextInput
         placeholder="Email"
+        placeholderTextColor={theme.colors.text}
         value={email}
         onChangeText={setEmail}
         style={styles.input}
@@ -98,6 +121,7 @@ const LoginScreen = () => {
 
       <TextInput
         placeholder="Senha"
+        placeholderTextColor={theme.colors.text}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -106,6 +130,7 @@ const LoginScreen = () => {
 
       <TextInput
         placeholder="Confirme sua Senha"
+        placeholderTextColor={theme.colors.text}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -150,6 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 10,
     backgroundColor: '#D3D3D3',
+    color: theme.colors.text
   },
   createAccountText: {
     width: '80%',
@@ -178,6 +204,7 @@ const styles = StyleSheet.create({
   },
   text1: {
     paddingRight: 8,
+    color: theme.colors.text
   },
   text2: {
     color: '#FF6F61',

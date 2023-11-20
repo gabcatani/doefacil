@@ -8,13 +8,14 @@ import {
   UserList,
   Trash,
 } from 'phosphor-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 import { View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 
 interface IParamsItem {
   item: IDonation;
@@ -46,6 +47,8 @@ const ItemDetails = ({ route }: any) => {
   const [isMyDonation, setIsMyDonation] = useState(true);
 
   const navigation = useNavigation();
+
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const goBack = () => {
     navigation.goBack();
@@ -129,6 +132,7 @@ const ItemDetails = ({ route }: any) => {
       </Header>
       {!showMap ? (
         <>
+        <ScrollView ref={scrollViewRef}>
           <ImagemContainer>
             <ItemImage source={{ uri: item.imageUrl }} />
           </ImagemContainer>
@@ -146,7 +150,8 @@ const ItemDetails = ({ route }: any) => {
               <BoldText>Endereço:</BoldText> {fullAddress}
             </NameText>
           </CardTextContainer>
-        </>
+        </ScrollView>
+      </>
       ) : (
         <MapContainer>
           <Map
@@ -281,6 +286,7 @@ const CardTextContainer = styled.View`
   border-radius: 20px;
   padding: 20px;
   margin: 20px;
+  marginBottom: 100px;
 `;
 
 const BoldText = styled.Text`
@@ -307,7 +313,8 @@ const MarkerImage = styled.Image`
   height: 70px;
   border-radius: 20px;
   background-color: transparent;
-  border: 2px solid white;
+  borderColor: white;
+  borderWidth: 2px;
 `;
 
 const PinShaft = styled(View)`

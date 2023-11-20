@@ -557,7 +557,7 @@ const Screen = styled.View`
 const TextInput = styled.TextInput`
   width: 100%;
   height: ${(props) => props.height || 50}px;
-  border: 1px solid black;
+  border: 1px solid #ccc;
   margin-bottom: 16px;
   padding: 20px 15px;
   border-radius: 8px;
