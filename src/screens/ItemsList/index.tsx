@@ -9,9 +9,12 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { MMKV } from 'react-native-mmkv';
 import styled from 'styled-components/native';
+import { storageLocal } from '../../../App';
+import { Text } from 'react-native-svg';
 interface Region {
   latitude: number;
   longitude: number;
@@ -40,6 +43,7 @@ interface IDonation {
 
 const ItemsList = () => {
   const [donations, setDonations] = useState<IDonation[] | null>(null);
+  const [myDonations, setMyDonations] = useState<IDonation[] | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [activeOption, setActiveOption] = useState('list');
   const [mapReady, setMapReady] = useState(false);
@@ -51,7 +55,7 @@ const ItemsList = () => {
   const navigation = useNavigation<any>();
 
   const calculateDistance = (item: IDonation) => {
-    if (!currentRegion || !item.coordinates) return;
+    if (!currentRegion || !item.coordinates) return null;
 
     const rad = (x: number) => (x * Math.PI) / 180;
 
@@ -69,12 +73,7 @@ const ItemsList = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
 
-    if (distance < 1000) {
-      return distance.toFixed(0) + ' Metros';
-    } else {
-      const distanceKm = (distance / 1000).toFixed(1);
-      return distanceKm + ' Km';
-    }
+    return distance;
   };
 
   const navigationToDetails = useCallback(
@@ -132,13 +131,18 @@ const ItemsList = () => {
           distance: calculateDistance(donation),
         }));
 
-        donationsDistance.sort((a, b) => a.distance - b.distance);
-
-        setDonations(
+        setMyDonations(
           donationsDistance.map(
             (donationDistance) => donationDistance.donation,
-          ),
+          ).filter(donation => donation.donatorId == storageLocal.getString('uid')),
         );
+
+        setDonations(
+          donationsDistance.sort((a, b) => a.distance - b.distance).map(
+            (donationDistance) => donationDistance.donation,
+          ).filter(donation => donation.donatorId !== storageLocal.getString('uid')),
+        );
+
       } catch (error) {
         console.error('Erro ao buscar doações: ', error);
       }
@@ -165,7 +169,7 @@ const ItemsList = () => {
 
             <CategoryText numberOfLines={1} ellipsizeMode="tail">
               <Ruler color="gray" weight="bold" size={15} />
-              {calculateDistance(item)}
+              {convertDistanceToText(calculateDistance(item))}
             </CategoryText>
           </CardTextContainer>
         </Card>
@@ -173,6 +177,20 @@ const ItemsList = () => {
     ),
     [currentRegion],
   );
+
+  const convertDistanceToText = (distance: number | null) => {
+
+    if(!distance){
+      return 'Distância não encontrada'
+    }
+
+    if (distance < 1000) {
+      return distance.toFixed(0) + ' metros';
+    } else {
+      const distanceKm = (distance / 1000).toFixed(1);
+      return distanceKm + ' KM';
+    }
+  }
 
   const renderDonationMarker = (item: IDonation) => (
     <Marker
@@ -200,7 +218,7 @@ const ItemsList = () => {
   return (
     <Screen>
       <Header>
-        <HeaderText>Doações disponíveis</HeaderText>
+        <HeaderText>Doações</HeaderText>
       </Header>
 
       <ToggleContainer>
@@ -211,7 +229,7 @@ const ItemsList = () => {
             setShowMap(false);
           }}
         >
-          <OptionText active={activeOption === 'list'}>Lista</OptionText>
+        <OptionText active={activeOption === 'list'}>Disponíveis</OptionText>
         </Option>
         <Option
           active={activeOption === 'mapa'}
@@ -225,13 +243,29 @@ const ItemsList = () => {
       </ToggleContainer>
 
       {!showMap ? (
-        donations ? (
+        donations || myDonations ? (
+          <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{ flex: 1 }}
+        >
+          {!!myDonations?.length &&(<>
+          <TitleText>Minhas doações</TitleText>
+          <FlatList
+            data={myDonations}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            scrollEnabled={false}
+          />
+          </>)}
+
+          <TitleText>Disponíveis</TitleText>
           <FlatList
             data={donations}
             renderItem={renderItem}
             keyExtractor={(item) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
+            scrollEnabled={false}
           />
+        </ScrollView>
         ) : (
           <ActiveIndicatorContainer>
             <ActivityIndicator size="large" color="#0000ff" />
@@ -279,6 +313,14 @@ const Header = styled.View`
 const HeaderText = styled.Text`
   font-size: 24px;
   font-weight: bold;
+  color: ${props => props.theme.colors.text};
+`;
+
+const TitleText = styled.Text`
+  marginTop: 20px;
+  font-size: 20px;
+  font-weight: bold;
+  textAlign: center;
   color: ${props => props.theme.colors.text};
 `;
 
@@ -352,7 +394,8 @@ const MarkerImage = styled.Image`
   height: 70px;
   border-radius: 20px;
   background-color: transparent;
-  border: 2px solid white;
+  borderColor: white;
+  borderWidth: 2px;
 `;
 
 const PinShaft = styled(View)`

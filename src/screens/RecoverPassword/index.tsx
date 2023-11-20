@@ -9,6 +9,7 @@ import styled from 'styled-components/native';
 import * as yup from 'yup';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
+import theme from '../../theme';
 
 const validationSchema = yup.object({
   email: yup
@@ -69,6 +70,7 @@ const RecoverPasswordScreen = () => {
         render={({ field: { onChange, onBlur, value } }) => (
           <StyledInput
             placeholder="Digite seu email"
+            placeholderTextColor={theme.colors.secondary}
             onBlur={onBlur}
             onChangeText={onChange}
             value={value}
@@ -108,6 +110,7 @@ const TitleText = styled.Text`
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 32px;
+  color: ${props => props.theme.colors.text};
 `;
 
 const StyledInput = styled.TextInput`
@@ -117,6 +120,7 @@ const StyledInput = styled.TextInput`
   margin-bottom: 16px;
   padding: 10px;
   border-radius: 8px;
+  color: ${props => props.theme.colors.text};
 `;
 
 const ErrorText = styled.Text`
