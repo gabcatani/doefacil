@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   text2: {
-    color: 'orange',
+    color: '#FF6F61',
   },
 });
 

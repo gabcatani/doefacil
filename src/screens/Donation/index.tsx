@@ -2,6 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -35,6 +36,7 @@ import useLocationStorage from '../../hooks/data/useLocationStorage';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 import theme from '../../theme';
+import MapPicker from './Map';
 
 interface IFormInput {
   itemName: string;
@@ -51,6 +53,11 @@ interface IAddress {
   number: string;
   bairro: string;
   city: string;
+}
+
+interface ICoordinates {
+  lat: string;
+  lng: string;
 }
 
 const validationSchema = yup.object().shape({
@@ -72,7 +79,17 @@ const DonationForm = () => {
     bairro: '',
     city: '',
   });
+
+  const [coordinates, setCoordinates] = useState<ICoordinates>({
+    lat: '',
+    lng: '',
+  });
+
   const { location, getGoogleMapsAddress } = useLocationStorage();
+
+  const handleLocationSelect = (location) => {
+    setCoordinates({ lat: location.latitude, lng: location.longitude });
+  };
 
   useEffect(() => {
     if (location) {
@@ -97,6 +114,7 @@ const DonationForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeOption, setActiveOption] = useState('address');
 
   const nextStep = () => {
     setCurrentStep(currentStep + 1);
@@ -139,6 +157,24 @@ const DonationForm = () => {
     });
   };
 
+  const getLatLng = async (address: string) => {
+    const apiKey = 'AIzaSyBnb3_YFy1mvVbB6GV5YBc44_ZjXZ2fNNE';
+
+    const response = await axios.get(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${apiKey}`,
+    );
+
+    if (response.data.results && response.data.results.length > 0) {
+      const { lat, lng } = response.data.results[0].geometry.location;
+      return { lat, lng };
+    } else {
+      useToast({
+        message: 'Endereço não encontrado, Tente novamente!',
+        type: TOASTTYPE.ERROR,
+      });
+    }
+  };
+
   const {
     control,
     handleSubmit,
@@ -150,11 +186,32 @@ const DonationForm = () => {
   });
 
   const onSubmit = async (data: IFormInput) => {
-    const { itemName, itemCategory, description, usageTime } = data;
+    const {
+      itemName,
+      itemCategory,
+      description,
+      usageTime,
+      city,
+      neighborhood,
+      number,
+      street,
+    } = data;
 
     if (currentStep < 3) {
       nextStep();
       return;
+    }
+
+    const fullAddress = `${street}, ${number}, ${neighborhood}, ${city}`;
+    const getCoordinates = await getLatLng(fullAddress);
+    if (getCoordinates) {
+      console.log(
+        'Latitude:',
+        getCoordinates.lat,
+        'Longitude:',
+        getCoordinates.lng,
+      );
+      // Aqui você pode fazer o que quiser com a latitude e longitude
     }
 
     const imageRef = storage().ref(`images/${data.itemName}`);
@@ -163,21 +220,16 @@ const DonationForm = () => {
     const donatorId = auth().currentUser?.uid;
 
     try {
-      await firestore()
-        .collection('donations')
-        .add({
-          donatorId,
-          itemName,
-          itemCategory,
-          usageTime,
-          description,
-          addresss,
-          coordinates: {
-            lat: location?.latitude,
-            lng: location?.longitude,
-          },
-          imageUrl,
-        });
+      await firestore().collection('donations').add({
+        donatorId,
+        itemName,
+        itemCategory,
+        usageTime,
+        description,
+        addresss,
+        coordinates,
+        imageUrl,
+      });
       reset();
       setImageUri(null);
       useToast({ message: 'Doação Cadastrada', type: TOASTTYPE.SUCCESS });
@@ -191,7 +243,10 @@ const DonationForm = () => {
   const IconTextInput = ({ icon, ...props }) => {
     return (
       <InputContainer>
-        <StyledTextInput placeholderTextColor={theme.colors.secondary}  {...props} />
+        <StyledTextInput
+          placeholderTextColor={theme.colors.secondary}
+          {...props}
+        />
         {icon}
       </InputContainer>
     );
@@ -302,73 +357,102 @@ const DonationForm = () => {
         return (
           <React.Fragment key="step2">
             <HeaderContainer>
-              <ChevronContainer>
-                <StyledButton onPress={prevStep} backgroundColor="white">
-                  <CaretLeft color="gray" weight="bold" size={32} />
-                </StyledButton>
-              </ChevronContainer>
-              <ButtonText color="black">Endereço</ButtonText>
+              <StyledButton onPress={prevStep} backgroundColor="white">
+                <CaretLeft color="gray" weight="bold" size={32} />
+              </StyledButton>
+              <ToggleContainer>
+                <Option
+                  active={activeOption === 'address'}
+                  onPress={() => {
+                    setActiveOption('address');
+                  }}
+                >
+                  <OptionText active={activeOption === 'list'}>
+                    Endereço
+                  </OptionText>
+                </Option>
+                <Option
+                  active={activeOption === 'map'}
+                  onPress={() => {
+                    setActiveOption('map');
+                  }}
+                >
+                  <OptionText active={activeOption === 'map'}>Mapa</OptionText>
+                </Option>
+              </ToggleContainer>
             </HeaderContainer>
 
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <IconTextInput
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  placeholder="Cidade"
-                  icon={<Buildings color="gray" weight="bold" size={24} />}
+            {activeOption === 'map' ? (
+              <>
+                <MapPicker onLocationSelected={handleLocationSelect} />
+              </>
+            ) : (
+              <>
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <IconTextInput
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      placeholder="Cidade"
+                      icon={<Buildings color="gray" weight="bold" size={24} />}
+                    />
+                  )}
+                  name="city"
+                  defaultValue={addresss.city}
                 />
-              )}
-              name="city"
-              defaultValue={addresss.city}
-            />
 
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <IconTextInput
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  placeholder="Bairro"
-                  icon={<TrafficSignal color="gray" weight="bold" size={24} />}
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <IconTextInput
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      placeholder="Bairro"
+                      icon={
+                        <TrafficSignal color="gray" weight="bold" size={24} />
+                      }
+                    />
+                  )}
+                  name="neighborhood"
+                  defaultValue={addresss.bairro}
                 />
-              )}
-              name="neighborhood"
-              defaultValue={addresss.bairro}
-            />
 
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <IconTextInput
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  placeholder="Rua"
-                  icon={<Truck color="gray" weight="bold" size={24} />}
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <IconTextInput
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      placeholder="Rua"
+                      icon={<Truck color="gray" weight="bold" size={24} />}
+                    />
+                  )}
+                  name="street"
+                  defaultValue={addresss.street}
                 />
-              )}
-              name="street"
-              defaultValue={addresss.street}
-            />
 
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <IconTextInput
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  placeholder="Número"
-                  icon={<ListNumbers color="gray" weight="bold" size={24} />}
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <IconTextInput
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      placeholder="Número"
+                      icon={
+                        <ListNumbers color="gray" weight="bold" size={24} />
+                      }
+                    />
+                  )}
+                  name="number"
+                  defaultValue={addresss.number}
                 />
-              )}
-              name="number"
-              defaultValue={addresss.number}
-            />
+              </>
+            )}
 
             <StyledButton onPress={nextStep}>
               <ButtonText>Próximo</ButtonText>
@@ -464,7 +548,7 @@ export default DonationForm;
 
 const Screen = styled.View`
   flex: 1;
-  background-color: ${props => props.theme.colors.background};
+  background-color: ${(props) => props.theme.colors.background};
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -479,7 +563,7 @@ const TextInput = styled.TextInput`
   border-radius: 8px;
   font-size: 16px;
   text-align-vertical: top;
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const Title = styled.Text`
@@ -504,7 +588,7 @@ const StyledTextInput = styled.TextInput`
   flex: 1;
   font-size: 16px;
   padding: 10px 15px;
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const HeaderContainer = styled.View`
@@ -578,4 +662,25 @@ const InstructionText = styled.Text`
   color: #666;
   margin-bottom: 5px;
   text-align: center;
+`;
+
+const ToggleContainer = styled.View`
+  flex-direction: row;
+`;
+
+const Option = styled.TouchableOpacity`
+  flex: 1;
+  margin: 0px 20px;
+  padding: 10px 30px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 20px;
+  background-color: ${(props) =>
+    props.active ? '#4A8C79' : 'transparent'}; /* Cor de fundo ativa ajustada */
+`;
+
+const OptionText = styled.Text`
+  color: ${(props) =>
+    props.active ? '#fff' : '#000'}; /* Cores do texto ajustadas */
+  font-weight: bold;
 `;
