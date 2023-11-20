@@ -145,7 +145,6 @@ const DonationForm = () => {
 
     launchImageLibrary(options, (response: ImagePickerResponse) => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
       } else if (response.errorMessage) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
@@ -202,22 +201,19 @@ const DonationForm = () => {
       return;
     }
 
-    const fullAddress = `${street}, ${number}, ${neighborhood}, ${city}`;
-    const getCoordinates = await getLatLng(fullAddress);
-    if (getCoordinates) {
-      console.log(
-        'Latitude:',
-        getCoordinates.lat,
-        'Longitude:',
-        getCoordinates.lng,
-      );
-      // Aqui você pode fazer o que quiser com a latitude e longitude
-    }
-
     const imageRef = storage().ref(`images/${data.itemName}`);
     await imageRef.putFile(imageUri ?? '');
     const imageUrl = await imageRef.getDownloadURL();
     const donatorId = auth().currentUser?.uid;
+
+    let choseAddress
+
+    if (activeOption === 'address') {
+      const fullAddress = `${street}, ${number}, ${neighborhood}, ${city}`;
+      choseAddress = await getLatLng(fullAddress)
+    } else {
+      choseAddress = coordinates
+    }
 
     try {
       await firestore().collection('donations').add({
@@ -227,7 +223,10 @@ const DonationForm = () => {
         usageTime,
         description,
         addresss,
-        coordinates,
+        coordinates: {
+          lat: choseAddress.lat,
+          lng: choseAddress.lng
+        },
         imageUrl,
       });
       reset();
@@ -237,6 +236,8 @@ const DonationForm = () => {
     } catch (error) {
       console.error('Erro ao adicionar doação:', error);
       useToast({ message: 'Tente Novamente', type: TOASTTYPE.ERROR });
+    } finally {
+      setCurrentStep(1)
     }
   };
 
@@ -357,7 +358,7 @@ const DonationForm = () => {
         return (
           <React.Fragment key="step2">
             <HeaderContainer>
-              <StyledButton onPress={prevStep} backgroundColor="white">
+              <StyledButton onPress={prevStep} backgroundColor="transparent">
                 <CaretLeft color="gray" weight="bold" size={32} />
               </StyledButton>
               <ToggleContainer>
@@ -367,7 +368,7 @@ const DonationForm = () => {
                     setActiveOption('address');
                   }}
                 >
-                  <OptionText active={activeOption === 'list'}>
+                  <OptionText active={activeOption === 'address'}>
                     Endereço
                   </OptionText>
                 </Option>
@@ -465,7 +466,7 @@ const DonationForm = () => {
           <React.Fragment key="step3">
             <HeaderContainer>
               <ChevronContainer>
-                <StyledButton onPress={prevStep} backgroundColor="white">
+                <StyledButton onPress={prevStep} backgroundColor="transparent">
                   <CaretLeft color="gray" weight="bold" size={32} />
                 </StyledButton>
               </ChevronContainer>

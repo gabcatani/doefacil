@@ -72,6 +72,21 @@ const Solicitations = () => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'aceita':
+        return '#6DA2B8'; // Variação mais clara e vibrante
+      case 'entregue':
+        return '#3A5D72'; // Variação mais escura e saturada
+      case 'recusada':
+        return '#8F6D7A'; // Variação mais avermelhada
+      case 'pendente':
+        return '#748F9D'; // Variação mais desaturada/neutra
+      default:
+        return 'transparent'; // Transparente por padrão
+    }
+  };
+
   useEffect(() => {
     const userId = storageLocal.getString('uid');
 
@@ -151,81 +166,85 @@ const Solicitations = () => {
   return (
     <Screen>
       <Header>
-        <HeaderText>Doações e solicitações</HeaderText>
+        <HeaderText>Doações e Solicitações</HeaderText>
       </Header>
       <ToggleContainer>
         <Option
           active={activeOption === 'doacoes'}
           onPress={() => {
             setActiveOption('doacoes');
-            setShowMyDonations(true)
+            setShowMyDonations(true);
           }}
         >
-          <OptionText active={activeOption === 'doacoes'}>Minhas doações</OptionText>
+          <OptionText active={activeOption === 'doacoes'}>Doações</OptionText>
         </Option>
         <Option
           active={activeOption === 'solicitacoes'}
           onPress={() => {
             setActiveOption('solicitacoes');
-            setShowMyDonations(false)
+            setShowMyDonations(false);
           }}
         >
-          <OptionText active={activeOption === 'solicitacoes'}>Minhas solicitações</OptionText>
+          <OptionText active={activeOption === 'solicitacoes'}>
+            Solicitações
+          </OptionText>
         </Option>
       </ToggleContainer>
       {showMyDonations && (
-        <Section>
-          {myDonations.map((donation, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.item}
-              onPress={() => {
-                handleItemPress(donation.id);
-              }}
-            >
-              <Image
-                source={{ uri: donation.image }}
-                style={styles.itemImage}
-              />
-              <View style={styles.itemTextContainer}>
-                <Text style={styles.itemTitle}>{donation.title}</Text>
-                <Text
-                  style={[styles.itemStatus, getStatusStyle(donation.status)]}
+        <>
+          {myDonations.length === 0 ? (
+            <EmptyScreen>
+              <StyledText>Você ainda não fez doações.</StyledText>
+            </EmptyScreen>
+          ) : (
+            <>
+              {myDonations.map((donation, index) => (
+                <Item
+                  key={index}
+                  onPress={() => {
+                    handleItemPress(donation.id);
+                  }}
                 >
-                  {donation.status}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </Section>
+                  <ItemImage source={{ uri: donation.image }} />
+                  <ItemTextContainer>
+                    <ItemTitle>{donation.title}</ItemTitle>
+                    <ItemStatus active={getStatusColor(donation.status)}>
+                      {donation.status}
+                    </ItemStatus>
+                  </ItemTextContainer>
+                </Item>
+              ))}
+            </>
+          )}
+        </>
       )}
       {!showMyDonations && (
-        <Section>
-          {donationRequests.map((request, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.item}
-              onPress={() => {
-                handleItemPress(request.id);
-              }}
-            >
-              <Image source={{ uri: request.image }} style={styles.itemImage} />
-              <View style={styles.itemTextContainer}>
-                <Text style={styles.itemTitle}>{request.title}</Text>
-                <Text
-                  style={[styles.itemStatus, getStatusStyle(request.status)]}
+        <>
+          {donationRequests.length === 0 ? (
+            <EmptyScreen>
+              <StyledText>Você ainda não fez doações.</StyledText>
+            </EmptyScreen>
+          ) : (
+            <>
+              {donationRequests.map((request, index) => (
+                <Item
+                  key={index}
+                  onPress={() => {
+                    handleItemPress(request.id);
+                  }}
                 >
-                  {request.status}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </Section>
-      )}
-      {donationRequests.length === 0 && myDonations.length === 0 && (
-        <EmptyScreen>
-          <StyledText>Você ainda não fez ou recebeu doações.</StyledText>
-        </EmptyScreen>
+                  <ItemImage source={{ uri: request.image }} />
+                  <ItemTextContainer>
+                    <ItemTitle>{request.title}</ItemTitle>
+                    <ItemStatus active={getStatusColor(request.status)}>
+                      {request.status}
+                    </ItemStatus>
+                  </ItemTextContainer>
+                </Item>
+              ))}
+            </>
+          )}
+        </>
       )}
     </Screen>
   );
@@ -233,12 +252,6 @@ const Solicitations = () => {
 
 const Screen = styled.View`
   flex: 1;
-`;
-
-const Section = styled.View`
-  padding: 10px;
-  border-bottom-width: 1px;
-  border-bottom-color: '#ccc';
 `;
 
 const EmptyScreen = styled.View`
@@ -253,16 +266,6 @@ const StyledText = styled.Text`
   text-align-vertical: center;
 `;
 
-const ToggleButton = styled.TouchableOpacity`
-  flex-direction: row;
-  justify-content: center;
-`;
-
-const ToggleText = styled.Text`
-  font-size: 16px;
-  margin: 10px;
-`;
-
 const Header = styled.View`
   padding-top: 20px;
   margin-bottom: 10px;
@@ -272,11 +275,12 @@ const Header = styled.View`
 const HeaderText = styled.Text`
   font-size: 24px;
   font-weight: bold;
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const ToggleContainer = styled.View`
   flex-direction: row;
+  margin: 15px 0px;
 `;
 
 const Option = styled.TouchableOpacity`
@@ -285,75 +289,49 @@ const Option = styled.TouchableOpacity`
   padding: 10px 30px;
   justify-content: center;
   align-items: center;
-  border-radius: 20px;
-  background-color: ${(props) =>
-    props.active ? '#4A8C79' : 'transparent'};
+  border-radius: 10px;
+  background-color: ${(props) => (props.active ? '#4D748F' : 'transparent')};
 `;
 
 const OptionText = styled.Text`
-  color: ${(props) =>
-    props.active ? '#fff' : '#000'};
+  color: ${(props) => (props.active ? '#fff' : '#000')};
   font-weight: bold;
 `;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  section: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  itemTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.text
-  },
-  noDonations: {
-    fontSize: 20,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-  },
-  item: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    marginVertical: 5,
-    alignItems: 'center',
-  },
-  itemImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  itemTextContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  itemStatus: {
-    fontSize: 14,
-    color: 'white',
-    padding: 5,
-    borderRadius: 5,
-    position: 'absolute',
-    right: 10,
-  },
-  aceita: {
-    backgroundColor: 'green',
-  },
-  recusada: {
-    backgroundColor: 'red',
-  },
-  pendente: {
-    backgroundColor: 'blue',
-  },
-});
+const Item = styled.TouchableOpacity`
+  flex-direction: row;
+  background-color: #f0f0f0;
+  padding: 10px;
+  margin-vertical: 5px;
+  align-items: center;
+`;
+
+const ItemImage = styled.Image`
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  margin-right: 10px;
+`;
+
+const ItemTextContainer = styled.View`
+  flex: 1;
+  justify-content: space-between;
+`;
+
+const ItemTitle = styled.Text`
+  font-size: 18px;
+  font-weight: bold;
+  color: ${(props) => props.theme.colors.text};
+`;
+
+const ItemStatus = styled.Text`
+  font-size: 14px;
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+  position: absolute;
+  right: 10px;
+  background-color: ${(props) => (props.active ? props.active : 'transparent')};
+`;
 
 export default Solicitations;

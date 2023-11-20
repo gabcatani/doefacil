@@ -11,9 +11,65 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
+import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
-import * as S from './styles';
 import theme from '../../theme';
+
+const Screen = styled.View`
+  flex: 1;
+`;
+
+const Header = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  margin-right: 20px;
+`;
+
+const Touchable = styled.TouchableOpacity``;
+
+const ChatTitle = styled.Text`
+  font-weight: bold;
+  font-size: 20px;
+  text-align: center;
+  padding: 10px;
+  color: ${(props) => props.theme.colors.text};
+`;
+
+const SendButton = styled.TouchableOpacity`
+  justify-content: center;
+  align-items: center;
+  background-color: #6091f7;
+  padding: 0px 25px;
+  border-radius: 12px;
+`;
+
+const TextSendButton = styled.Text`
+  color: white;
+`;
+
+const TituloAnuncio = styled.Text`
+  font-weight: bold;
+  font-size: 18px;
+`;
+
+const ChatInputContainer = styled.View`
+  flex-direction: row;
+  padding: 10px;
+`;
+
+const TextInputStyled = styled.TextInput`
+  flex: 1;
+  border-color: gray;
+  border-width: 1px;
+  margin-right: 10px;
+  border-radius: 5px;
+  padding: 10px;
+  color: ${(props) => props.theme.colors.text};
+  text-align: center;
+`;
 
 const styles = StyleSheet.create({
   chatContainer: {
@@ -39,7 +95,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginVertical: 5,
     maxWidth: '70%',
-    alignSelf: 'flex-end'
+    alignSelf: 'flex-end',
   },
   outraMensagem: {
     backgroundColor: '#fff',
@@ -47,7 +103,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginVertical: 5,
     maxWidth: '70%',
-    alignSelf: 'flex-start'
+    alignSelf: 'flex-start',
   },
   textInput: {
     flex: 1,
@@ -56,7 +112,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderRadius: 5,
     padding: 10,
-    color: theme.colors.text
+    color: theme.colors.text,
   },
   header: {
     flexDirection: 'row',
@@ -71,12 +127,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
     padding: 10,
-    color: theme.colors.text
+    color: theme.colors.text,
   },
   tituloAnuncio: {
     fontWeight: 'bold',
     fontSize: 18,
-    color: theme.colors.text
+    color: theme.colors.text,
   },
   status: {
     marginTop: 5,
@@ -355,28 +411,20 @@ const Solicitation = ({ route }) => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <S.Header>
-        <S.GoBackButton
+    <Screen>
+      <Header>
+        <Touchable
           onPress={() => {
             goBack();
           }}
         >
           <CaretLeft color="gray" weight="bold" size={32} />
-        </S.GoBackButton>
-      </S.Header>
-      {!!solicitation && !!donation && (
-        <View style={styles.header}>
-          <Image
-            source={{ uri: donation?.imageUrl }}
-            style={styles.itemImage}
-          />
-          <Text style={styles.tituloAnuncio}>{donation?.itemName}</Text>
-          <Text style={[styles.status, getStatusStyle(status)]}>
-            {getStatus(solicitation).toUpperCase()}
-          </Text>
-        </View>
-      )}
+        </Touchable>
+
+        <Image source={{ uri: donation?.imageUrl }} style={styles.itemImage} />
+        <TituloAnuncio>{donation?.itemName}</TituloAnuncio>
+        <TituloAnuncio>{getStatus(solicitation).toUpperCase()}</TituloAnuncio>
+      </Header>
 
       {!!solicitation && (
         <View>
@@ -458,14 +506,14 @@ const Solicitation = ({ route }) => {
 
       {!delivered && (
         <View style={styles.chatContainer}>
-          <Text style={styles.chatTitle}>CHAT</Text>
+          <ChatTitle>C H A T</ChatTitle>
           <ScrollView style={styles.chatContainer} ref={scrollViewRef}>
             {messages.map((msg, index) => (
               <View
                 key={index}
                 style={msg.myText ? styles.minhaMensagem : styles.outraMensagem}
               >
-                <Text style={{color: theme.colors.text}}>{msg.text}</Text>
+                <Text style={{ color: theme.colors.text }}>{msg.text}</Text>
                 <Text style={styles.messageDate}>
                   {msg.date.toLocaleDateString('pt-BR')}{' '}
                   {msg.date.toLocaleTimeString('pt-BR')}
@@ -473,19 +521,20 @@ const Solicitation = ({ route }) => {
               </View>
             ))}
           </ScrollView>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
+          <ChatInputContainer>
+            <TextInputStyled
               value={text}
               onChangeText={setText}
               placeholder="Digite uma mensagem"
               placeholderTextColor={theme.colors.secondary}
             />
-            <Button title="Enviar" onPress={sendMessage} />
-          </View>
+            <SendButton onPress={sendMessage}>
+              <TextSendButton>Enviar</TextSendButton>
+            </SendButton>
+          </ChatInputContainer>
         </View>
       )}
-    </View>
+    </Screen>
   );
 };
 

@@ -86,7 +86,6 @@ const ItemsList = () => {
   useEffect(() => {
     Geolocation.getCurrentPosition(
       (position) => {
-        console.log('position', position);
         const { latitude, longitude } = position.coords;
         setCurrentRegion({
           latitude,
@@ -162,15 +161,19 @@ const ItemsList = () => {
             <ItemImage source={{ uri: item.imageUrl }} />
           </ImagemContainer>
           <CardTextContainer>
-            <NameText>
-              <Cube color="gray" weight="bold" size={20} />
-              {item.itemName}
-            </NameText>
+            <InfoContainer>
+              <Cube color="gray" weight="bold" size={20} style={{ margin: 5}}/>
+              <NameText>
+                {item.itemName}
+              </NameText>
+            </InfoContainer>
 
-            <CategoryText numberOfLines={1} ellipsizeMode="tail">
-              <Ruler color="gray" weight="bold" size={15} />
-              {convertDistanceToText(calculateDistance(item))}
-            </CategoryText>
+            <InfoContainer>
+              <Ruler color="gray" weight="bold" size={15} style={{ margin: 5}}/>
+              <CategoryText numberOfLines={1} ellipsizeMode="tail">
+                {convertDistanceToText(calculateDistance(item))}
+              </CategoryText>
+              </InfoContainer>
           </CardTextContainer>
         </Card>
       </TouchableOpacity>
@@ -243,20 +246,22 @@ const ItemsList = () => {
       </ToggleContainer>
 
       {!showMap ? (
-        donations || myDonations ? (
-          <ScrollView
+      donations || myDonations ? (
+        <ScrollView
           showsVerticalScrollIndicator={false}
           style={{ flex: 1 }}
         >
-          {!!myDonations?.length &&(<>
-          <TitleText>Minhas doações</TitleText>
-          <FlatList
-            data={myDonations}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-          />
-          </>)}
+          {!!myDonations?.length && (
+            <>
+              <TitleText>Minhas doações</TitleText>
+              <FlatList
+                data={myDonations}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id.toString()}
+                scrollEnabled={false}
+              />
+            </>
+          )}
 
           <TitleText>Disponíveis</TitleText>
           <FlatList
@@ -266,28 +271,30 @@ const ItemsList = () => {
             scrollEnabled={false}
           />
         </ScrollView>
-        ) : (
-          <ActiveIndicatorContainer>
-            <ActivityIndicator size="large" color="#0000ff" />
-          </ActiveIndicatorContainer>
-        )
       ) : (
-        <MapContainer>
-          <Map
-            initialRegion={{
-              latitude: currentRegion?.latitude ?? 0,
-              longitude: currentRegion?.longitude ?? 0,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-            onMapReady={() => {
-              setMapReady(true);
-            }}
-          >
-            {mapReady && donations?.map(renderDonationMarker)}
-          </Map>
-        </MapContainer>
-      )}
+        <ActiveIndicatorContainer>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </ActiveIndicatorContainer>
+      )
+    ) : currentRegion ? (
+      <MapContainer>
+        <Map
+          initialRegion={{
+            latitude: currentRegion.latitude,
+            longitude: currentRegion.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+          onMapReady={() => setMapReady(true)}
+        >
+          {mapReady && donations?.map(renderDonationMarker)}
+        </Map>
+      </MapContainer>
+    ) : (
+      <ActiveIndicatorContainer>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </ActiveIndicatorContainer>
+    )}
     </Screen>
   );
 };
@@ -317,15 +324,16 @@ const HeaderText = styled.Text`
 `;
 
 const TitleText = styled.Text`
-  marginTop: 20px;
+  margin-top: 20px;
   font-size: 20px;
   font-weight: bold;
-  textAlign: center;
+  text-align: center;
   color: ${props => props.theme.colors.text};
 `;
 
 const ToggleContainer = styled.View`
   flex-direction: row;
+  margin: 15px 0px;
 `;
 
 const Option = styled.TouchableOpacity`
@@ -334,7 +342,7 @@ const Option = styled.TouchableOpacity`
   padding: 10px 30px;
   justify-content: center;
   align-items: center;
-  border-radius: 20px;
+  border-radius: 10px;
   background-color: ${(props) =>
     props.active ? '#4A8C79' : 'transparent'}; /* Cor de fundo ativa ajustada */
 `;
@@ -358,7 +366,7 @@ const CardTextContainer = styled.View`
   align-items: flex-start;
   padding: 10px;
   margin-left: 10px;
-  flexShrink: 1;
+  flex-shrink: 1;
 `;
 
 const ImagemContainer = styled.View`
@@ -372,11 +380,16 @@ const ItemImage = styled.Image`
   border-radius: 20px;
 `;
 
+const InfoContainer = styled.View`
+ flex-direction: row;
+ justify-content: center;
+ align-items: center;
+`;
+
 const NameText = styled.Text`
   font-size: 20px;
   text-align: left;
   color: ${props => props.theme.colors.text};
-  maxWidth: 100%;
 `;
 
 const CategoryText = styled.Text`
@@ -394,8 +407,8 @@ const MarkerImage = styled.Image`
   height: 70px;
   border-radius: 20px;
   background-color: transparent;
-  borderColor: white;
-  borderWidth: 2px;
+  border-color: white;
+  border-width: 2px;
 `;
 
 const PinShaft = styled(View)`

@@ -4,7 +4,7 @@ import {
   Cube,
   Article,
   MapTrifold,
-  StarFour,
+  AddressBook,
 } from 'phosphor-react-native';
 import React from 'react';
 import Avaliation from '../screens/Avaliation';
@@ -20,7 +20,7 @@ export default function TabRoutes() {
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName="Informations"
+      initialRouteName="Maps"
     >
       <Tab.Screen
         name="Informations"
@@ -46,13 +46,13 @@ export default function TabRoutes() {
         name="Maps"
         component={ItemsList}
         options={{
-          tabBarLabel: 'Mapa',
+          tabBarLabel: 'Doações',
           tabBarIcon: ({ color, size }) => (
             <MapTrifold color="teal" weight="duotone" size={32} />
           ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Test"
         component={Test}
         options={{
@@ -61,7 +61,7 @@ export default function TabRoutes() {
             <MapTrifold color="teal" weight="duotone" size={32} />
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Solicitations"
         component={Solicitations}
@@ -78,7 +78,7 @@ export default function TabRoutes() {
         options={{
           tabBarLabel: 'Avalie',
           tabBarIcon: ({ color, size }) => (
-            <StarFour color="teal" weight="duotone" size={32} />
+            <AddressBook color="teal" weight="duotone" size={32} />
           ),
         }}
       />
