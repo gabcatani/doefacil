@@ -1,10 +1,10 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
-import { CaretLeft } from 'phosphor-react-native';
+import { Envelope } from 'phosphor-react-native';
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { ActivityIndicator, View, TouchableOpacity, TextInput, Text } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 import * as yup from 'yup';
 import { useToast } from '../../hooks/ui/useToast';
@@ -40,7 +40,10 @@ const RecoverPasswordScreen = () => {
       });
       navigation.navigate('Login');
     } catch (error) {
-      useToast({ message: 'Erro ao tentar redefinir a senha. Tente novamente!', type: TOASTTYPE.ERROR });
+      useToast({
+        message: 'Erro ao tentar redefinir a senha. Tente novamente!',
+        type: TOASTTYPE.ERROR,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -48,34 +51,38 @@ const RecoverPasswordScreen = () => {
 
   return (
     <Screen>
-      <HeaderContainer>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <CaretLeft size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <HeaderTitle>Recuperação de Senha</HeaderTitle>
-      </HeaderContainer>
+      <HeaderTitle>Recuperação de Senha</HeaderTitle>
       <Controller
         control={control}
         name="email"
         defaultValue=""
         render={({ field: { onChange, onBlur, value } }) => (
-          <StyledInput
-            placeholder="Digite seu email"
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-            keyboardType="email-address"
-          />
+          <InputWithIcon>
+            <Envelope size={24} color="#ccc" />
+            <StyledInput
+              placeholder="Digite seu email"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              keyboardType="email-address"
+            />
+          </InputWithIcon>
         )}
       />
       {errors.email && <ErrorText>{errors.email.message}</ErrorText>}
-      <SubmitButton onPress={handleSubmit(handleRecoverPassword)} disabled={isLoading}>
+      <SubmitButton
+        onPress={handleSubmit(handleRecoverPassword)}
+        disabled={isLoading}
+      >
         {isLoading ? (
           <ActivityIndicator size="small" color="#ffffff" />
         ) : (
           <ButtonText>Enviar</ButtonText>
         )}
       </SubmitButton>
+      <TextLink onPress={() => navigation.navigate('Login')}>
+        Voltar para o Login
+      </TextLink>
     </Screen>
   );
 };
@@ -89,26 +96,27 @@ const Screen = styled.View`
   align-items: center;
 `;
 
-const HeaderContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 20px;
-`;
-
 const HeaderTitle = styled.Text`
   font-size: 20px;
   font-weight: bold;
   text-align: center;
-  flex: 1;
 `;
 
-const StyledInput = styled.TextInput`
+const InputWithIcon = styled.View`
+  flex-direction: row;
+  align-items: center;
   border: 1px solid #ccc;
   border-radius: 8px;
-  padding: 10px;
+  margin: 20px;
+  padding: 0px 10px;
   margin-vertical: 8px;
   width: 80%;
+`;
+
+// Atualize o StyledInput para não incluir margens e paddings que agora estão no InputWithIcon
+const StyledInput = styled.TextInput`
+  flex: 1;
+  padding-left: 10px; /* ou ajuste conforme necessário */
 `;
 
 const ErrorText = styled.Text`
@@ -118,7 +126,7 @@ const ErrorText = styled.Text`
 
 const SubmitButton = styled.TouchableOpacity`
   background-color: ${theme.colors.primary};
-  padding: 15px;
+  padding: 10px;
   border-radius: 8px;
   align-items: center;
   justify-content: center;
@@ -129,6 +137,11 @@ const SubmitButton = styled.TouchableOpacity`
 const ButtonText = styled.Text`
   color: white;
   font-size: 18px;
+`;
+
+const TextLink = styled.Text`
+  color: ${theme.colors.primary};
+  margin-top: 20px;
 `;
 
 export default RecoverPasswordScreen;

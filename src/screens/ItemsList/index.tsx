@@ -14,7 +14,6 @@ import MapView, { Marker, Callout } from 'react-native-maps';
 import { MMKV } from 'react-native-mmkv';
 import styled from 'styled-components/native';
 import { storageLocal } from '../../../App';
-import { Text } from 'react-native-svg';
 interface Region {
   latitude: number;
   longitude: number;
@@ -48,6 +47,7 @@ const ItemsList = () => {
   const [activeOption, setActiveOption] = useState('list');
   const [mapReady, setMapReady] = useState(false);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+  const [acceptLocation, setAcceptLocation] = useState(true);
 
   const isFocused = useIsFocused();
 
@@ -99,6 +99,9 @@ const ItemsList = () => {
       },
       (error) => {
         console.error(error);
+        setAcceptLocation(false);
+        storage.set('locationPermissionDenied', JSON.stringify(true));
+        console.log('Usuário recusou a solicitação de localização');
       },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
     );
@@ -131,17 +134,22 @@ const ItemsList = () => {
         }));
 
         setMyDonations(
-          donationsDistance.map(
-            (donationDistance) => donationDistance.donation,
-          ).filter(donation => donation.donatorId == storageLocal.getString('uid')),
+          donationsDistance
+            .map((donationDistance) => donationDistance.donation)
+            .filter(
+              (donation) => donation.donatorId == storageLocal.getString('uid'),
+            ),
         );
 
         setDonations(
-          donationsDistance.sort((a, b) => a.distance - b.distance).map(
-            (donationDistance) => donationDistance.donation,
-          ).filter(donation => donation.donatorId !== storageLocal.getString('uid')),
+          donationsDistance
+            .sort((a, b) => a.distance - b.distance)
+            .map((donationDistance) => donationDistance.donation)
+            .filter(
+              (donation) =>
+                donation.donatorId !== storageLocal.getString('uid'),
+            ),
         );
-
       } catch (error) {
         console.error('Erro ao buscar doações: ', error);
       }
@@ -162,18 +170,26 @@ const ItemsList = () => {
           </ImagemContainer>
           <CardTextContainer>
             <InfoContainer>
-              <Cube color="gray" weight="bold" size={20} style={{ margin: 5}}/>
-              <NameText>
-                {item.itemName}
-              </NameText>
+              <Cube
+                color="gray"
+                weight="bold"
+                size={20}
+                style={{ margin: 5 }}
+              />
+              <NameText>{item.itemName}</NameText>
             </InfoContainer>
 
             <InfoContainer>
-              <Ruler color="gray" weight="bold" size={15} style={{ margin: 5}}/>
+              <Ruler
+                color="gray"
+                weight="bold"
+                size={15}
+                style={{ margin: 5 }}
+              />
               <CategoryText numberOfLines={1} ellipsizeMode="tail">
                 {convertDistanceToText(calculateDistance(item))}
               </CategoryText>
-              </InfoContainer>
+            </InfoContainer>
           </CardTextContainer>
         </Card>
       </TouchableOpacity>
@@ -182,9 +198,8 @@ const ItemsList = () => {
   );
 
   const convertDistanceToText = (distance: number | null) => {
-
-    if(!distance){
-      return 'Distância não encontrada'
+    if (!distance) {
+      return 'Distância não encontrada';
     }
 
     if (distance < 1000) {
@@ -193,7 +208,7 @@ const ItemsList = () => {
       const distanceKm = (distance / 1000).toFixed(1);
       return distanceKm + ' KM';
     }
-  }
+  };
 
   const renderDonationMarker = (item: IDonation) => (
     <Marker
@@ -232,69 +247,70 @@ const ItemsList = () => {
             setShowMap(false);
           }}
         >
-        <OptionText active={activeOption === 'list'}>Disponíveis</OptionText>
+          <OptionText active={activeOption === 'list'}>Disponíveis</OptionText>
         </Option>
-        <Option
-          active={activeOption === 'mapa'}
-          onPress={() => {
-            setActiveOption('mapa');
-            setShowMap(true);
-          }}
-        >
-          <OptionText active={activeOption === 'mapa'}>Mapa</OptionText>
-        </Option>
+        {acceptLocation && (
+          <Option
+            active={activeOption === 'mapa'}
+            onPress={() => {
+              setActiveOption('mapa');
+              setShowMap(true);
+            }}
+          >
+            <OptionText active={activeOption === 'mapa'}>Mapa</OptionText>
+          </Option>
+        )}
       </ToggleContainer>
 
       {!showMap ? (
-      donations || myDonations ? (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={{ flex: 1 }}
-        >
-          {!!myDonations?.length && (
-            <>
-              <TitleText>Minhas doações</TitleText>
-              <FlatList
-                data={myDonations}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id.toString()}
-                scrollEnabled={false}
-              />
-            </>
-          )}
+        donations || myDonations ? (
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            {!!myDonations?.length && (
+              <>
+                <TitleText>Minhas doações</TitleText>
+                <FlatList
+                  data={myDonations}
+                  renderItem={renderItem}
+                  keyExtractor={(item) => item.id.toString()}
+                  scrollEnabled={false}
+                />
+              </>
+            )}
 
-          <TitleText>Disponíveis</TitleText>
-          <FlatList
-            data={donations}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-          />
-        </ScrollView>
+            <TitleText>Disponíveis</TitleText>
+            <FlatList
+              data={donations}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+              scrollEnabled={false}
+            />
+          </ScrollView>
+        ) : (
+          <ActiveIndicatorContainer>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </ActiveIndicatorContainer>
+        )
+      ) : currentRegion ? (
+        <MapContainer>
+          <Map
+            initialRegion={{
+              latitude: currentRegion.latitude,
+              longitude: currentRegion.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+            onMapReady={() => {
+              setMapReady(true);
+            }}
+          >
+            {mapReady && donations?.map(renderDonationMarker)}
+          </Map>
+        </MapContainer>
       ) : (
         <ActiveIndicatorContainer>
           <ActivityIndicator size="large" color="#0000ff" />
         </ActiveIndicatorContainer>
-      )
-    ) : currentRegion ? (
-      <MapContainer>
-        <Map
-          initialRegion={{
-            latitude: currentRegion.latitude,
-            longitude: currentRegion.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-          onMapReady={() => setMapReady(true)}
-        >
-          {mapReady && donations?.map(renderDonationMarker)}
-        </Map>
-      </MapContainer>
-    ) : (
-      <ActiveIndicatorContainer>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </ActiveIndicatorContainer>
-    )}
+      )}
     </Screen>
   );
 };
@@ -320,7 +336,7 @@ const Header = styled.View`
 const HeaderText = styled.Text`
   font-size: 24px;
   font-weight: bold;
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const TitleText = styled.Text`
@@ -328,7 +344,7 @@ const TitleText = styled.Text`
   font-size: 20px;
   font-weight: bold;
   text-align: center;
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const ToggleContainer = styled.View`
@@ -381,21 +397,21 @@ const ItemImage = styled.Image`
 `;
 
 const InfoContainer = styled.View`
- flex-direction: row;
- justify-content: center;
- align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 `;
 
 const NameText = styled.Text`
   font-size: 20px;
   text-align: left;
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const CategoryText = styled.Text`
   font-size: 16px;
   text-align: left;
-  color: ${props => props.theme.colors.text};
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const Map = styled(MapView)`

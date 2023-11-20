@@ -1,37 +1,52 @@
+import { yupResolver } from '@hookform/resolvers/yup';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { useNavigation } from '@react-navigation/native';
+import {
+  Envelope,
+  UserCircle,
+  SignIn,
+  UserPlus,
+  Password,
+} from 'phosphor-react-native';
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
-import { Envelope, LockSimple, UserCircle, SignIn, UserPlus } from 'phosphor-react-native';
-import auth from '@react-native-firebase/auth';
+import * as yup from 'yup';
+import { storageLocal } from '../../../App';
 import { useToast } from '../../hooks/ui/useToast';
 import { TOASTTYPE } from '../../hooks/ui/useToast/types';
 import theme from '../../theme';
-import { storageLocal } from '../../../App';
-import firestore from '@react-native-firebase/firestore';
 
 const schema = yup.object().shape({
   fullName: yup.string().required('Nome completo é obrigatório'),
   email: yup.string().email('Email inválido').required('Email é obrigatório'),
-  password: yup.string().min(6, 'A senha deve ter pelo menos 6 caracteres').required('Senha é obrigatória'),
-  confirmPassword: yup.string()
+  password: yup
+    .string()
+    .min(6, 'A senha deve ter pelo menos 6 caracteres')
+    .required('Senha é obrigatória'),
+  confirmPassword: yup
+    .string()
     .oneOf([yup.ref('password'), null], 'As senhas não correspondem')
     .required('Confirmação de senha é obrigatória'),
 });
 
 const LoginScreen = () => {
   const navigation = useNavigation<any>();
-  const { control, handleSubmit, formState: { errors }, watch } = useForm({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm({
     resolver: yupResolver(schema),
   });
   const [loading, setLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleLogin = async (data) => {
-    console.log('data', data)
+    console.log('data', data);
     setLoading(true);
     auth()
       .signInWithEmailAndPassword(data.email, data.password)
@@ -44,28 +59,33 @@ const LoginScreen = () => {
       })
       .catch(() => {
         useToast({ message: 'Tente novamente!', type: TOASTTYPE.ERROR });
-      }).finally(()=> {
-        setLoading(false);
       })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const handleCreateAccount = async (data) => {
     auth()
       .createUserWithEmailAndPassword(data.email, data.password)
-      .then((userCredentials) => {
+      .then(async (userCredentials) => {
         storageLocal.set('uid', userCredentials.user.uid);
 
         navigation.navigate('Auth');
 
-        return firestore().collection('users').doc(userCredentials.user.uid).set(data.fullName, { merge: true })
+        await firestore()
+          .collection('users')
+          .doc(userCredentials.user.uid)
+          .set(data.fullName, { merge: true });
       })
       .catch((error) => {
         if (error.code === 'auth/email-already-in-use') {
           useToast({ message: 'Email já utilizado!', type: TOASTTYPE.ERROR });
         }
-      }).finally(()=> {
-        setLoading(false);
       })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const toggleForm = () => {
@@ -121,7 +141,7 @@ const LoginScreen = () => {
           defaultValue=""
           render={({ field: { onChange, onBlur, value } }) => (
             <InputContainer>
-              <LockSimple color="gray" weight="bold" size={24} />
+              <Password color="gray" weight="bold" size={24} />
               <StyledTextInput
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -141,7 +161,7 @@ const LoginScreen = () => {
             defaultValue=""
             render={({ field: { onChange, onBlur, value } }) => (
               <InputContainer>
-                <LockSimple color="gray" weight="bold" size={24} />
+                <Password color="gray" weight="bold" size={24} />
                 <StyledTextInput
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -156,29 +176,35 @@ const LoginScreen = () => {
         {isCreating && <ErrorText>{errors.confirmPassword?.message}</ErrorText>}
 
         {loading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        ) : (
+          <Button
+            onPress={handleSubmit(
+              isCreating ? handleCreateAccount : handleLogin,
+            )}
+          >
+            <ButtonText>{isCreating ? 'Criar Conta' : 'Entrar'}</ButtonText>
+            {isCreating ? (
+              <UserPlus color="white" weight="bold" size={24} />
+            ) : (
+              <SignIn color="white" weight="bold" size={24} />
+            )}
+          </Button>
+        )}
+      </Form>
+      {isCreating ? (
+        <TextLink onPress={toggleForm}>Já tem uma conta? Entrar</TextLink>
       ) : (
-        <Button onPress={handleSubmit(isCreating ? handleCreateAccount : handleLogin)}>
-          <ButtonText>{isCreating ? 'Criar Conta' : 'Entrar'}</ButtonText>
-          {isCreating ? <UserPlus color="white" weight="bold" size={24} /> : <SignIn color="white" weight="bold" size={24} />}
-        </Button>
+        <>
+          <TextLink onPress={() => navigation.navigate('RecoverPassword')}>
+            Esqueceu a senha?
+          </TextLink>
+          <TextLink onPress={toggleForm}>
+            Não tem uma conta? Cadastre-se
+          </TextLink>
+        </>
       )}
-    </Form>
-    {isCreating ? (
-      <TextLink onPress={toggleForm}>
-        Já tem uma conta? Entrar
-      </TextLink>
-    ) : (
-      <>
-        <TextLink onPress={() => navigation.navigate('RecoverPassword')}>
-          Esqueceu a senha?
-        </TextLink>
-        <TextLink onPress={toggleForm}>
-          Não tem uma conta? Cadastre-se
-        </TextLink>
-      </>
-    )}
-  </Container>
+    </Container>
   );
 };
 
@@ -193,6 +219,7 @@ const Container = styled.View`
 
 const Title = styled.Text`
   font-size: 24px;
+  font-weight: bold;
   color: ${theme.colors.text};
   margin-bottom: 20px;
 `;
