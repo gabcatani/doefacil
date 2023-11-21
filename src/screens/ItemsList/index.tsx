@@ -423,7 +423,6 @@ const MarkerImage = styled.Image`
   height: 70px;
   border-radius: 20px;
   background-color: transparent;
-  border-color: white;
   border-width: 2px;
 `;
 
