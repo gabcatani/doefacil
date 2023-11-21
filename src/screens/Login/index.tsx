@@ -123,6 +123,7 @@ const LoginScreen = () => {
                   onChangeText={onChange}
                   value={value}
                   placeholder="Nome completo"
+                  placeholderTextColor={theme.colors.secondary}
                 />
               </InputContainer>
             )}
@@ -143,6 +144,7 @@ const LoginScreen = () => {
                 value={value}
                 placeholder="Email"
                 keyboardType="email-address"
+                placeholderTextColor={theme.colors.secondary}
               />
             </InputContainer>
           )}
@@ -162,6 +164,7 @@ const LoginScreen = () => {
                 value={value}
                 placeholder="Senha"
                 secureTextEntry
+                placeholderTextColor={theme.colors.secondary}
               />
             </InputContainer>
           )}
@@ -182,6 +185,7 @@ const LoginScreen = () => {
                   value={value}
                   placeholder="Confirme a senha"
                   secureTextEntry
+                  placeholderTextColor={theme.colors.secondary}
                 />
               </InputContainer>
             )}
@@ -261,6 +265,7 @@ const ErrorText = styled.Text`
   font-size: 12px;
   color: red;
   margin-bottom: 10px;
+  color: ${theme.colors.text};
 `;
 
 const Button = styled.TouchableOpacity`

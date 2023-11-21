@@ -61,6 +61,7 @@ const RecoverPasswordScreen = () => {
             <Envelope size={24} color="#ccc" />
             <StyledInput
               placeholder="Digite seu email"
+              placeholderTextColor={theme.colors.secondary}
               onBlur={onBlur}
               onChangeText={onChange}
               value={value}
