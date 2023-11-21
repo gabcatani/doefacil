@@ -264,6 +264,7 @@ const StyledText = styled.Text`
   font-size: 20px;
   text-align: center;
   text-align-vertical: center;
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const Header = styled.View`

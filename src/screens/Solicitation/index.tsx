@@ -53,6 +53,7 @@ const TextSendButton = styled.Text`
 const TituloAnuncio = styled.Text`
   font-weight: bold;
   font-size: 18px;
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const DeliveredTextContainer = styled.View`
@@ -65,6 +66,7 @@ const DeliveredText = styled.Text`
   font-size: 20px;
   font-weight: bold;
   text-align: center;
+  color: ${(props) => props.theme.colors.text};
 `;
 
 const ChatInputContainer = styled.View`
