@@ -99,7 +99,7 @@ const ItemsList = () => {
       },
       (error) => {
         console.error(error);
-        setAcceptLocation(false);
+        // setAcceptLocation(false);
         storage.set('locationPermissionDenied', JSON.stringify(true));
         console.log('Usuário recusou a solicitação de localização');
       },
@@ -249,17 +249,17 @@ const ItemsList = () => {
         >
           <OptionText active={activeOption === 'list'}>Disponíveis</OptionText>
         </Option>
-        {acceptLocation && (
-          <Option
-            active={activeOption === 'mapa'}
-            onPress={() => {
-              setActiveOption('mapa');
-              setShowMap(true);
-            }}
-          >
-            <OptionText active={activeOption === 'mapa'}>Mapa</OptionText>
-          </Option>
-        )}
+        {/* {acceptLocation && ( */}
+        <Option
+          active={activeOption === 'mapa'}
+          onPress={() => {
+            setActiveOption('mapa');
+            setShowMap(true);
+          }}
+        >
+          <OptionText active={activeOption === 'mapa'}>Mapa</OptionText>
+        </Option>
+        {/* )} */}
       </ToggleContainer>
 
       {!showMap ? (

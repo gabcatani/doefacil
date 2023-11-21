@@ -1,11 +1,9 @@
+import { MapPin } from 'phosphor-react-native';
 import React, { useState } from 'react';
+import { ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import styled from 'styled-components/native';
 import useLocationStorage from '../../../hooks/data/useLocationStorage';
-import { ActivityIndicator } from 'react-native';
-import {
-  MapPin,
-} from 'phosphor-react-native';
 
 const ContainerLoading = styled.View`
   height: 70%;

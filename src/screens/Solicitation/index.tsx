@@ -55,6 +55,18 @@ const TituloAnuncio = styled.Text`
   font-size: 18px;
 `;
 
+const DeliveredTextContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+`;
+
+const DeliveredText = styled.Text`
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+`;
+
 const ChatInputContainer = styled.View`
   flex-direction: row;
   padding: 10px;
@@ -467,10 +479,12 @@ const Solicitation = ({ route }) => {
       )}
 
       {delivered && (
-        <Text style={styles.chatTitle}>
-          Obrigado por realizar essa doação! Você está ajudando o mundo a se
-          tornar um lugar melhor :D
-        </Text>
+        <DeliveredTextContainer>
+          <DeliveredText>
+            Obrigado por realizar essa doação! Você está ajudando o mundo a se
+            tornar um lugar melhor.
+          </DeliveredText>
+        </DeliveredTextContainer>
       )}
 
       {status === 'pendente' &&

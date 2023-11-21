@@ -117,7 +117,9 @@ const DonationForm = () => {
   const [activeOption, setActiveOption] = useState('address');
 
   const nextStep = () => {
-    setCurrentStep(currentStep + 1);
+    if (validateCurrentStep()) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const prevStep = () => {
@@ -125,6 +127,47 @@ const DonationForm = () => {
   };
 
   const totalSteps = 3;
+
+  const validateCurrentStep = () => {
+    const formData = getValues();
+    let fieldsToCheck = [];
+
+    switch (currentStep) {
+      case 1:
+        fieldsToCheck = [
+          formData.itemName,
+          formData.itemCategory,
+          formData.usageTime,
+          formData.description,
+        ];
+        break;
+      case 2:
+        if (activeOption === 'map') {
+          fieldsToCheck = [];
+          break;
+        } else {
+          fieldsToCheck = [
+            formData.city,
+            formData.neighborhood,
+            formData.street,
+            formData.number,
+          ];
+          break;
+        }
+    }
+
+    const isAnyFieldEmpty = fieldsToCheck.some((field) => !field);
+
+    if (isAnyFieldEmpty) {
+      useToast({
+        message: 'Preencha todos os campos obrigatórios.',
+        type: TOASTTYPE.ERROR,
+      });
+      return false;
+    }
+
+    return true;
+  };
 
   const categories = [
     'Móveis',
@@ -178,6 +221,7 @@ const DonationForm = () => {
     control,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors },
   } = useForm<IFormInput>({
     resolver: yupResolver(validationSchema),
@@ -199,6 +243,27 @@ const DonationForm = () => {
 
     if (currentStep < 3) {
       nextStep();
+      return;
+    }
+
+    const fieldsToCheck = [
+      data.itemName,
+      data.itemCategory,
+      data.description,
+      data.usageTime,
+      data.city,
+      data.neighborhood,
+      data.number,
+      data.street,
+    ];
+    const isAnyFieldEmpty = fieldsToCheck.some((field) => !field);
+
+    if (isAnyFieldEmpty) {
+      useToast({
+        message: 'Preencha todos os campos obrigatórios.',
+        type: TOASTTYPE.ERROR,
+      });
+      setLoading(false);
       return;
     }
 
@@ -227,8 +292,8 @@ const DonationForm = () => {
           description,
           addresss,
           coordinates: {
-            lat: choseAddress.lat,
-            lng: choseAddress.lng,
+            lat: choseAddress?.lat,
+            lng: choseAddress?.lng,
           },
           imageUrl,
         });
@@ -474,7 +539,7 @@ const DonationForm = () => {
                   <CaretLeft color="gray" weight="bold" size={32} />
                 </StyledButton>
               </ChevronContainer>
-              <ButtonText color="black">Imagem</ButtonText>
+              <ImageText color="black">Imagem</ImageText>
             </HeaderContainer>
 
             {!imageUri && (
@@ -622,6 +687,12 @@ const StyledButton = styled.TouchableOpacity`
 
 const ButtonText = styled.Text`
   color: ${(props) => props.color || 'white'};
+`;
+
+const ImageText = styled.Text`
+  color: ${(props) => props.color || 'white'};
+  font-weight: bold;
+  font-size: 24px;
 `;
 
 const PaginationWrapper = styled.View`
